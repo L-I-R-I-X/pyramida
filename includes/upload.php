@@ -82,8 +82,8 @@ if (!in_array($fileType, ALLOWED_MIME_TYPES)) {
     redirect(SITE_URL . 'register.php', 'Недопустимый тип файла', 'error');
 }
 
-if ($fileSize < UPLOAD_MIN_SIZE) {
-    redirect(SITE_URL . 'register.php', 'Файл слишком маленький (минимум 1 Мб)', 'error');
+if ($fileSize < UPLOAD_MIN_SIZE && UPLOAD_MIN_SIZE > 0) {
+    redirect(SITE_URL . 'register.php', 'Файл слишком маленький (минимум ' . (UPLOAD_MIN_SIZE / 1024 / 1024) . ' Мб)', 'error');
 }
 
 if ($fileSize > UPLOAD_MAX_SIZE) {

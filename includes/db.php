@@ -1,11 +1,20 @@
 <?php
 
+// Учётные данные БД настраиваются через install.php
+// Если файл не настроен, раскомментируйте и измените значения ниже:
+/*
 $host = 'localhost';
 $dbname = 'pyramida';
 $username = 'root';
 $password = '';
+*/
 
-$dsn = "mysql:host=$host;charset=utf8mb4";
+// Проверка наличия учётных данных
+if (!isset($host) || !isset($dbname) || !isset($username)) {
+    die('Ошибка: База данных не настроена. Запустите <a href="../install.php">install.php</a> для настройки.');
+}
+
+$dsn = "mysql:host=$host;dbname=$dbname;charset=utf8mb4";
 
 $options = [
     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -16,10 +25,6 @@ $options = [
 try {
     
     $pdo = new PDO($dsn, $username, $password, $options);
-
-    $pdo->exec("CREATE DATABASE IF NOT EXISTS `$dbname` 
-                DEFAULT CHARACTER SET utf8mb4 
-                COLLATE utf8mb4_unicode_ci");
 
     $pdo->exec("USE `$dbname`");
 
