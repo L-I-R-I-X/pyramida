@@ -1,11 +1,20 @@
 <?php
+// Подключаем config.php и db.php для работы с БД и сессиями
 $configFile = __DIR__ . '/config.php';
+$dbFile = __DIR__ . '/db.php';
+
 if (!file_exists($configFile)) {
-    die('Ошибка: Файл config.php не найден. Переименуйте config.example.php в config.php и настройте параметры подключения.');
+    die('Ошибка: Файл config.php не найден.');
 }
 require_once $configFile;
 
+if (!file_exists($dbFile)) {
+    die('Ошибка: Файл db.php не найден. Запустите install.php для настройки базы данных.');
+}
+require_once $dbFile;
+
 function requireAuth() {
+    // Сессия уже запущена в db.php, но проверяем на всякий случай
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
@@ -33,6 +42,7 @@ function getAdminLogin() {
 function login($login, $password) {
     global $pdo;
     
+    // Сессия уже должна быть запущена в db.php
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
@@ -54,7 +64,7 @@ function login($login, $password) {
     // Проверка блокировки
     if ($attempts['count'] >= $maxAttempts) {
         $waitTime = ceil($lockoutTime - (time() - $attempts['time']));
-        return false;
+        return ['success' => false, 'blocked' => true, 'wait_time' => $waitTime];
     }
     
     $stmt = $pdo->prepare("SELECT * FROM admins WHERE login = :login");
@@ -71,15 +81,21 @@ function login($login, $password) {
         $_SESSION['admin_logged_in'] = true;
         $_SESSION['admin_login'] = $admin['login'];
         $_SESSION['admin_id'] = $admin['id'];
-        return true;
+        return ['success' => true, 'blocked' => false];
     } else {
         // Неудачная попытка - увеличиваем счётчик
         $attempts['count']++;
         $attempts['time'] = time();
         $_SESSION[$attemptKey] = $attempts;
+        
+        $remainingAttempts = $maxAttempts - $attempts['count'];
+        return [
+            'success' => false, 
+            'blocked' => false, 
+            'remaining_attempts' => $remainingAttempts,
+            'attempts_left_before_block' => max(0, $remainingAttempts)
+        ];
     }
-    
-    return false;
 }
 
 function logout() {

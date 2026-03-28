@@ -19,8 +19,16 @@ try {
     $pdo = new PDO($dsn, $username, $password, $options);
 
     $pdo->exec("USE `$dbname`");
+    
+    // Создаем таблицу сессий, если она не существует
+    $pdo->exec("CREATE TABLE IF NOT EXISTS sessions (
+        id VARCHAR(128) PRIMARY KEY,
+        data TEXT,
+        expires INT(11) UNSIGNED NOT NULL,
+        INDEX idx_expires (expires)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
-    require_once __DIR__ . '/session_handler.php';
+    require_once __DIR__ . '/DatabaseSessionHandler.php';
     $sessionHandler = new DatabaseSessionHandler($pdo);
 
     if (session_status() === PHP_SESSION_NONE) {
