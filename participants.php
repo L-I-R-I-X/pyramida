@@ -12,7 +12,7 @@ if ($showTable !== '1') {
 }
 
 try {
-    // ✅ Изменено: vuz → educational_institution
+    
     $stmt = $pdo->query("
         SELECT id, fio, educational_institution, course, nomination, section, is_published, created_at 
         FROM applications 
@@ -23,7 +23,6 @@ try {
     $participants = [];
 }
 
-// Группировка по номинациям и разделам
 $groupedParticipants = [];
 foreach ($participants as $participant) {
     $nomination = $participant['nomination'] ?? 'Без номинации';

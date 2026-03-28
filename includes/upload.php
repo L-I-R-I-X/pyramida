@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $fio = sanitizeInput($_POST['fio'] ?? '');
-// ✅ Изменено: $vuz → $educational_institution
+
 $educational_institution = sanitizeInput($_POST['educational_institution'] ?? '');
 $course = sanitizeInput($_POST['course'] ?? '');
 $nomination = sanitizeInput($_POST['nomination'] ?? '');
@@ -26,7 +26,6 @@ if (empty($fio)) {
     $errors[] = 'Укажите ФИО';
 }
 
-// ✅ Изменено: ошибка "Укажите ВУЗ" → "Укажите учебное заведение"
 if (empty($educational_institution)) {
     $errors[] = 'Укажите учебное заведение';
 }
@@ -117,7 +116,7 @@ if (!createThumbnail($originalPath, $galleryPath, 800)) {
 }
 
 try {
-    // ✅ Изменено: столбец vuz → educational_institution в БД
+    
     $stmt = $pdo->prepare("
         INSERT INTO applications (fio, educational_institution, course, nomination, section, work_title, email, phone, work_file, created_at) 
         VALUES (:fio, :educational_institution, :course, :nomination, :section, :work_title, :email, :phone, :work, NOW())
@@ -125,7 +124,7 @@ try {
     
     $stmt->execute([
         'fio' => $fio,
-        // ✅ Изменено: ключ массива и значение
+        
         'educational_institution' => $educational_institution,
         'course' => $course,
         'nomination' => $nomination,

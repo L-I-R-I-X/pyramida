@@ -7,7 +7,7 @@ require_once '../includes/functions.php';
 requireAuth();
 
 try {
-    // ✅ Изменено: vuz → educational_institution
+    
     $stmt = $pdo->query("
         SELECT id, fio, educational_institution, course, nomination, section, email, phone, work_file, is_published, created_at 
         FROM applications 
@@ -18,7 +18,6 @@ try {
     $applications = [];
 }
 
-// ✅ Рассчитываем количество опубликованных работ
 $publishedCount = 0;
 foreach ($applications as $app) {
     if ($app['is_published']) {
@@ -31,7 +30,7 @@ $published = $_GET['published'] ?? '';
 
 if ($published !== '') {
     try {
-        // ✅ Изменено: vuz → educational_institution
+        
         $stmt = $pdo->prepare("
             SELECT id, fio, educational_institution, course, nomination, section, email, phone, work_file, is_published, created_at 
             FROM applications 
@@ -51,85 +50,6 @@ if ($published !== '') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Заявки — Админ-панель</title>
     <link rel="stylesheet" href="../assets/css/style.css">
-    <style>
-        .admin-filters {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .admin-filters a {
-            padding: 8px 16px;
-            background: #FFFFFF;
-            border: 1px solid #888888;
-            border-radius: 4px;
-            text-decoration: none;
-            color: #1A1A1A;
-            font-size: 0.9rem;
-        }
-        .admin-filters a.active {
-            background: #FF6B00;
-            border-color: #FF6B00;
-            color: #FFFFFF;
-        }
-        .applications-table {
-            background: #FFFFFF;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-        .applications-table table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .applications-table th,
-        .applications-table td {
-            padding: 15px;
-            text-align: left;
-            border-bottom: 1px solid #F5F5F5;
-        }
-        .applications-table th {
-            background: #1A1A1A;
-            color: #FFFFFF;
-            font-weight: 500;
-        }
-        .applications-table tr:hover {
-            background: #F5F5F5;
-        }
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 500;
-        }
-        .status-published {
-            background: #d4edda;
-            color: #155724;
-        }
-        .status-draft {
-            background: #f8d7da;
-            color: #721c24;
-        }
-        .action-btn {
-            padding: 6px 12px;
-            border-radius: 4px;
-            text-decoration: none;
-            font-size: 0.85rem;
-            margin-right: 5px;
-        }
-        .action-btn-view {
-            background: #FF6B00;
-            color: #FFFFFF;
-        }
-        .action-btn-moderate {
-            background: #1A1A1A;
-            color: #FFFFFF;
-        }
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #888888;
-        }
-    </style>
 </head>
 <body>
     <div class="admin-layout">
