@@ -1,18 +1,10 @@
 <?php
 
-// Учётные данные БД настраиваются через install.php
-// Если файл не настроен, раскомментируйте и измените значения ниже:
-/*
+// Учётные данные БД для хостинга pyramida.sibadi.org
 $host = 'localhost';
-$dbname = 'pyramida';
-$username = 'root';
-$password = '';
-*/
-
-// Проверка наличия учётных данных
-if (!isset($host) || !isset($dbname) || !isset($username)) {
-    die('Ошибка: База данных не настроена. Запустите <a href="../install.php">install.php</a> для настройки.');
-}
+$dbname = 'pyramida_1';
+$username = 'pyramida_1';
+$password = '%t5+66qh}&RMMT&L';
 
 $dsn = "mysql:host=$host;dbname=$dbname;charset=utf8mb4";
 
