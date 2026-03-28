@@ -39,11 +39,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Вход в админ-панель — Пирамида</title>
     <link rel="stylesheet" href="../assets/css/style.css">
+    <style>
+        .btn-login {
+            background: #FF6B00;
+            color: #FFFFFF;
+            padding: 12px 30px;
+            border: none;
             border-radius: 4px;
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             transition: background 0.3s;
+            width: 100%;
+            margin-top: 10px;
         }
         .btn-login:hover {
             background: #E55E00;

@@ -254,10 +254,26 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Экспорт данных — Админ-панель</title>
     <link rel="stylesheet" href="../assets/css/style.css">
+    <style>
+        .warning-box {
+            background: #FFF3CD;
+            border-left: 4px solid #FFC107;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 4px;
+        }
         .warning-box p {
             margin: 0;
             color: #856404;
             font-size: 0.9rem;
+        }
+        .export-info {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: #666;
+        }
+        .export-info p {
+            margin: 0;
         }
     </style>
 </head>
