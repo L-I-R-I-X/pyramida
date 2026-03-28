@@ -11,6 +11,7 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
 }
 
 $error = '';
+$remainingAttempts = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // CSRF validation
@@ -27,7 +28,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: applications.php');
             exit;
         } else {
-            $error = 'Неверный логин или пароль';
+            // Проверяем количество оставшихся попыток
+            $ipAddress = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+            $attemptKey = 'login_attempts_' . $ipAddress;
+            
+            if (isset($_SESSION[$attemptKey])) {
+                $attempts = $_SESSION[$attemptKey];
+                $maxAttempts = 5;
+                $remaining = $maxAttempts - $attempts['count'];
+                
+                if ($remaining <= 0) {
+                    $waitTime = ceil(300 - (time() - $attempts['time']));
+                    $error = "Слишком много неудачных попыток. Попробуйте через $waitTime сек.";
+                } else {
+                    $error = 'Неверный логин или пароль';
+                    $remainingAttempts = $remaining;
+                }
+            } else {
+                $error = 'Неверный логин или пароль';
+            }
         }
     }
 }
@@ -88,6 +107,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php if ($error): ?>
             <div class="error-message">
                 <?php echo htmlspecialchars($error); ?>
+                <?php if ($remainingAttempts !== null && $remainingAttempts > 0): ?>
+                    <br><small>Осталось попыток: <?php echo $remainingAttempts; ?></small>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
         

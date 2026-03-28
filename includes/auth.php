@@ -37,11 +37,34 @@ function login($login, $password) {
         session_start();
     }
     
+    // Проверка количества неудачных попыток входа для этого IP
+    $maxAttempts = 5;
+    $lockoutTime = 300; // 5 минут
+    
+    $ipAddress = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $attemptKey = 'login_attempts_' . $ipAddress;
+    
+    $attempts = $_SESSION[$attemptKey] ?? ['count' => 0, 'time' => time()];
+    
+    // Сброс счётчика если прошло достаточно времени
+    if (time() - $attempts['time'] > $lockoutTime) {
+        $attempts = ['count' => 0, 'time' => time()];
+    }
+    
+    // Проверка блокировки
+    if ($attempts['count'] >= $maxAttempts) {
+        $waitTime = ceil($lockoutTime - (time() - $attempts['time']));
+        return false;
+    }
+    
     $stmt = $pdo->prepare("SELECT * FROM admins WHERE login = :login");
     $stmt->execute(['login' => $login]);
     $admin = $stmt->fetch();
     
     if ($admin && password_verify($password, $admin['password_hash'])) {
+        // Успешный вход - сбрасываем счётчик попыток
+        unset($_SESSION[$attemptKey]);
+        
         // Регенерация session ID после успешного логина для защиты от session fixation
         session_regenerate_id(true);
         
@@ -49,6 +72,11 @@ function login($login, $password) {
         $_SESSION['admin_login'] = $admin['login'];
         $_SESSION['admin_id'] = $admin['id'];
         return true;
+    } else {
+        // Неудачная попытка - увеличиваем счётчик
+        $attempts['count']++;
+        $attempts['time'] = time();
+        $_SESSION[$attemptKey] = $attempts;
     }
     
     return false;
@@ -60,8 +88,10 @@ function logout() {
         session_start();
     }
 
+    // Полная очистка всех переменных сессии
     $_SESSION = [];
 
+    // Удаляем cookie сессии
     if (ini_get('session.use_cookies')) {
         $params = session_get_cookie_params();
         setcookie(
@@ -75,6 +105,10 @@ function logout() {
         );
     }
 
+    // Уничтожаем сессию
     session_destroy();
+    
+    // Дополнительная очистка для суперглобальных переменных
+    unset($_COOKIE[session_name()]);
 }
 ?>

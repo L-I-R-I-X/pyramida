@@ -12,7 +12,7 @@ if (!defined('UPLOAD_MAX_SIZE')) {
     define('UPLOAD_MAX_SIZE', 10 * 1024 * 1024); 
 }
 if (!defined('UPLOAD_MIN_SIZE')) {
-    define('UPLOAD_MIN_SIZE', 1 * 1024 * 1024);  
+    define('UPLOAD_MIN_SIZE', 0);  // Без нижнего лимита
 }
 if (!defined('ALLOWED_EXTENSIONS')) {
     define('ALLOWED_EXTENSIONS', ['jpg', 'jpeg']);
