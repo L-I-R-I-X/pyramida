@@ -3,6 +3,9 @@ require_once '../includes/auth.php';
 require_once '../includes/functions.php';
 require_once '../includes/csrf.php';
 
+// Генерируем CSRF токен при загрузке страницы
+generateCsrfToken();
+
 if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
     header('Location: applications.php');
     exit;
