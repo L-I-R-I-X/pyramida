@@ -1,10 +1,7 @@
 <?php
+require_once 'includes/config.php';
 require_once 'includes/db.php';
 require_once 'includes/functions.php';
-
-if (!defined('BASE_URL')) {
-    define('BASE_URL', 'http://localhost/pyramida/');
-}
 
 $showTable = getSetting('show_winners_table', '0');
 $showDiplomas = getSetting('show_diplomas', '1');

@@ -1,10 +1,7 @@
 <?php
+require_once 'includes/config.php';
 require_once 'includes/db.php';
 require_once 'includes/functions.php';
-
-if (!defined('BASE_URL')) {
-    define('BASE_URL', 'http://localhost/pyramida/');
-}
 
 $showTable = getSetting('show_participants_table', '0');
 $showCertificates = getSetting('show_certificates', '1');
