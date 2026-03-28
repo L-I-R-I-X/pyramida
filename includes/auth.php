@@ -1,11 +1,16 @@
 <?php
-require_once __DIR__ . '/config.php';
+$configFile = __DIR__ . '/config.php';
+if (!file_exists($configFile)) {
+    die('Ошибка: Файл config.php не найден. Переименуйте config.example.php в config.php и настройте параметры подключения.');
+}
+require_once $configFile;
 
 function requireAuth() {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
     
+    // Регенерация session ID для защиты от session fixation
     if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
         $loginUrl = BASE_URL . 'admin/login.php';
         if (!headers_sent()) {
@@ -37,6 +42,9 @@ function login($login, $password) {
     $admin = $stmt->fetch();
     
     if ($admin && password_verify($password, $admin['password_hash'])) {
+        // Регенерация session ID после успешного логина для защиты от session fixation
+        session_regenerate_id(true);
+        
         $_SESSION['admin_logged_in'] = true;
         $_SESSION['admin_login'] = $admin['login'];
         $_SESSION['admin_id'] = $admin['id'];

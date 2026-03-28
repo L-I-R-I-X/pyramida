@@ -1,4 +1,8 @@
 <?php
+$configFile = __DIR__ . '/../includes/config.php';
+if (!file_exists($configFile)) {
+    die('Ошибка: Файл config.php не найден. Переименуйте config.example.php в config.php и настройте параметры подключения.');
+}
 require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
@@ -35,30 +39,38 @@ if (!$application) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $publish = isset($_POST['publish']) ? (int)$_POST['publish'] : 0;
-    $score = isset($_POST['jury_score']) && $_POST['jury_score'] !== '' ? (int)$_POST['jury_score'] : null;
-    
-    if ($score !== null) {
-        $score = max(0, min(10, $score));
-    }
-    
-    try {
-        $stmt = $pdo->prepare("
-            UPDATE applications 
-            SET is_published = :published, jury_score = :score 
-            WHERE id = :id
-        ");
-        $stmt->execute([
-            'published' => $publish,
-            'score' => $score,
-            'id' => $applicationId
-        ]);
-        
-        header('Location: moderation.php?id=' . $applicationId . '&success=1');
-        exit;
-    } catch (PDOException $e) {
-        $message = 'Ошибка обновления статуса';
+    // CSRF validation
+    if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
+        $message = 'Ошибка безопасности: недействительный токен';
         $messageType = 'error';
+    } else {
+        $publish = isset($_POST['publish']) ? (int)$_POST['publish'] : 0;
+        $score = isset($_POST['jury_score']) && $_POST['jury_score'] !== '' ? (int)$_POST['jury_score'] : null;
+        
+        if ($score !== null) {
+            $score = max(0, min(10, $score));
+        }
+        
+        try {
+            $stmt = $pdo->prepare("
+                UPDATE applications 
+                SET is_published = :published, jury_score = :score 
+                WHERE id = :id
+            ");
+            $stmt->execute([
+                'published' => $publish,
+                'score' => $score,
+                'id' => $applicationId
+            ]);
+            
+            header('Location: moderation.php?id=' . $applicationId . '&success=1');
+            exit;
+        } catch (PDOException $e) {
+            $message = 'Ошибка обновления статуса';
+            $messageType = 'error';
+        }
+    }
+}
     }
 }
 

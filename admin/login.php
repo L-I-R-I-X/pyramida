@@ -1,6 +1,9 @@
 <?php
+require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
+require_once '../includes/functions.php';
+require_once '../includes/csrf.php';
 
 if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
     header('Location: applications.php');
@@ -10,15 +13,22 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $login = $_POST['login'] ?? '';
-    $password = $_POST['password'] ?? '';
-    
-    if (login($login, $password)) {
-        
-        header('Location: applications.php');
-        exit;
+    // CSRF validation
+    if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
+        $error = 'Ошибка безопасности: недействительный токен';
     } else {
-        $error = 'Неверный логин или пароль';
+        $login = $_POST['login'] ?? '';
+        $password = $_POST['password'] ?? '';
+        
+        // Валидация входных данных
+        if (empty($login) || empty($password)) {
+            $error = 'Введите логин и пароль';
+        } elseif (login($login, $password)) {
+            header('Location: applications.php');
+            exit;
+        } else {
+            $error = 'Неверный логин или пароль';
+        }
     }
 }
 ?>
@@ -74,6 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
         
         <form method="POST">
+            <?php csrfField(); ?>
             <div class="form-group">
                 <label for="login">Логин</label>
                 <input type="text" id="login" name="login" required autocomplete="username">
