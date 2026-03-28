@@ -10,7 +10,6 @@ $showParticipants = getSetting('show_participants_table', '0');
 $showWinners = getSetting('show_winners_table', '0');
 $showGallery = getSetting('show_gallery', '1');
 
-// Определяем текущую страницу
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 ?>
 <header class="site-header">

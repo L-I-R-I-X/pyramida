@@ -1,27 +1,18 @@
 <?php
-/**
- * Автоматический тест всех функций сайта конкурса «Пирамида»
- * Запуск: http://localhost/pyramida_v2/test-all.php
- */
 
-// ✅ НЕ вызываем session_start() здесь!
-// Подключение автозагрузчика Composer для проверки Dompdf
 if (file_exists(__DIR__ . '/vendor/autoload.php')) {
     require_once __DIR__ . '/vendor/autoload.php';
 }
 
-// ✅ Подключаем db.php — внутри уже есть настройка сессий в БД + session_start()
 require_once 'includes/db.php';
 require_once 'includes/functions.php';
 
-// Настройки
 $baseUrl = 'http://localhost/pyramida_v2/';
 $testResults = [];
 $totalTests = 0;
 $passedTests = 0;
 $failedTests = 0;
 
-// Функция для записи результата теста
 function test($name, $condition, $message = '') {
     global $totalTests, $passedTests, $failedTests, $testResults;
     $totalTests++;
@@ -37,7 +28,6 @@ function test($name, $condition, $message = '') {
     }
 }
 
-// Функция для проверки доступности страницы
 function testPage($name, $url) {
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -56,58 +46,6 @@ function testPage($name, $url) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Автоматическое тестирование сайта «Пирамида»</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #F5F5F5;
-            padding: 20px;
-            line-height: 1.6;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        h1 {
-            color: #1A1A1A;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 3px solid #FF6B00;
-        }
-        .summary {
-            background: #FFFFFF;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 25px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-        }
-        .summary-item {
-            text-align: center;
-            padding: 15px;
-            border-radius: 8px;
-        }
-        .summary-total { background: #E3F2FD; }
-        .summary-pass { background: #E8F5E9; }
-        .summary-fail { background: #FFEBEE; }
-        .summary-number {
-            font-size: 2.5rem;
-            font-weight: bold;
-            display: block;
-        }
-        .summary-label {
-            font-size: 0.9rem;
-            color: #666;
-            text-transform: uppercase;
-        }
-        .test-section {
-            background: #FFFFFF;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 25px;
         }
         .test-section h2 {
             color: #1A1A1A;
@@ -196,9 +134,7 @@ function testPage($name, $url) {
         </div>
         
         <?php
-        // ============================================
-        // РАЗДЕЛ 1: Проверка подключения и конфигурации
-        // ============================================
+
         echo '<div class="test-section">';
         echo '<h2>📋 Раздел 1: Подключение и конфигурация</h2>';
         
@@ -211,10 +147,7 @@ function testPage($name, $url) {
         test('Сессии хранятся в БД', ini_get('session.save_handler') === 'user', 'Handler: ' . ini_get('session.save_handler'));
         
         echo '</div>';
-        
-        // ============================================
-        // РАЗДЕЛ 2: Проверка доступности страниц
-        // ============================================
+
         echo '<div class="test-section">';
         echo '<h2>🌐 Раздел 2: Доступность публичных страниц</h2>';
         
@@ -228,29 +161,21 @@ function testPage($name, $url) {
         testPage('Страница "Контакты"', $baseUrl . 'contacts.php');
         
         echo '</div>';
-        
-        // ============================================
-        // РАЗДЕЛ 3: Проверка админ-панели
-        // ============================================
+
         echo '<div class="test-section">';
         echo '<h2>🔐 Раздел 3: Админ-панель</h2>';
         
         testPage('Страница входа в админку', $baseUrl . 'admin/login.php');
-        
-        // Тест авторизации
+
         $authTest = test('Авторизация администратора', false, 'Требуется проверка вручную');
-        
-        // Проверка защиты страниц
+
         test('Защита страницы applications.php', true, 'requireAuth() подключена');
         test('Защита страницы moderation.php', true, 'requireAuth() подключена');
         test('Защита страницы settings.php', true, 'requireAuth() подключена');
         test('Защита страницы export.php', true, 'requireAuth() подключена');
         
         echo '</div>';
-        
-        // ============================================
-        // РАЗДЕЛ 4: Проверка загрузки файлов
-        // ============================================
+
         echo '<div class="test-section">';
         echo '<h2>📁 Раздел 4: Загрузка файлов</h2>';
         
@@ -265,18 +190,14 @@ function testPage($name, $url) {
         test('Папка logs доступна для записи', is_writable(__DIR__ . '/logs'));
         
         echo '</div>';
-        
-        // ============================================
-        // РАЗДЕЛ 5: Проверка генерации сертификатов
-        // ============================================
+
         echo '<div class="test-section">';
         echo '<h2>📜 Раздел 5: Генерация сертификатов</h2>';
         
         test('Файл generate-certificate.php существует', file_exists(__DIR__ . '/generate-certificate.php'));
         test('Библиотека Dompdf подключена', class_exists('Dompdf\Dompdf'));
         test('Шрифты DejaVu доступны', is_dir(__DIR__ . '/vendor/dompdf/dompdf/lib/fonts'));
-        
-        // Проверка файлов подписей
+
         $hasSignatureMaximova = file_exists(__DIR__ . '/assets/img/signature_maximova.png');
         $hasSignatureZhigadlo = file_exists(__DIR__ . '/assets/img/signature_zhigadlo.png');
         $hasStamp = file_exists(__DIR__ . '/assets/img/stamp.png');
@@ -287,10 +208,7 @@ function testPage($name, $url) {
         test('Файл logo.png', file_exists(__DIR__ . '/assets/img/logo.png'));
         
         echo '</div>';
-        
-        // ============================================
-        // РАЗДЕЛ 6: Проверка экспорта данных
-        // ============================================
+
         echo '<div class="test-section">';
         echo '<h2>📦 Раздел 6: Экспорт данных</h2>';
         
@@ -301,10 +219,7 @@ function testPage($name, $url) {
         test('Файл admin/export.php существует', file_exists(__DIR__ . '/admin/export.php'));
         
         echo '</div>';
-        
-        // ============================================
-        // РАЗДЕЛ 7: Проверка настроек сайта
-        // ============================================
+
         echo '<div class="test-section">';
         echo '<h2>⚙️ Раздел 7: Настройки сайта</h2>';
         
@@ -324,10 +239,7 @@ function testPage($name, $url) {
         }
         
         echo '</div>';
-        
-        // ============================================
-        // РАЗДЕЛ 8: Проверка безопасности
-        // ============================================
+
         echo '<div class="test-section">';
         echo '<h2>🔒 Раздел 8: Безопасность</h2>';
         
@@ -339,10 +251,7 @@ function testPage($name, $url) {
         test('XSS предотвращён', true, 'Используется htmlspecialchars()');
         
         echo '</div>';
-        
-        // ============================================
-        // ИТОГОВАЯ СТАТИСТИКА
-        // ============================================
+
         $progressPercent = $totalTests > 0 ? round(($passedTests / $totalTests) * 100, 1) : 0;
         ?>
         

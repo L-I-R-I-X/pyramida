@@ -1,8 +1,5 @@
 <?php
-/**
- * Обработчик сессий с хранением в БД
- * Совместим с PHP 8.0+
- */
+
 class DatabaseSessionHandler implements SessionHandlerInterface {
     private $pdo;
     private $tableName = 'sessions';
@@ -42,7 +39,7 @@ class DatabaseSessionHandler implements SessionHandlerInterface {
     
     #[\ReturnTypeWillChange]
     public function write($id, $data) {
-        // ✅ Используем РАЗНЫЕ плейсхолдеры для INSERT и UPDATE
+        
         $stmt = $this->pdo->prepare("
             INSERT INTO {$this->tableName} (id, data) 
             VALUES (:sid, :sdata)

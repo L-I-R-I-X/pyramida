@@ -46,17 +46,14 @@ function login($login, $password) {
     return false;
 }
 
-// ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ ВЫХОДА
 function logout() {
-    // Убедимся, что сессия запущена
+    
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
-    
-    // 1. Очищаем все переменные сессии
+
     $_SESSION = [];
-    
-    // 2. Удаляем сессионную куку
+
     if (ini_get('session.use_cookies')) {
         $params = session_get_cookie_params();
         setcookie(
@@ -69,8 +66,7 @@ function logout() {
             $params['httponly']
         );
     }
-    
-    // 3. Уничтожаем сессию
+
     session_destroy();
 }
 ?>

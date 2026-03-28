@@ -109,7 +109,7 @@ function updateSetting($key, $value) {
     global $pdo;
     
     try {
-        // ✅ Используем РАЗНЫЕ плейсхолдеры для INSERT и UPDATE
+        
         $stmt = $pdo->prepare("
             INSERT INTO settings (setting_key, setting_value) 
             VALUES (:skey, :svalue)
@@ -155,13 +155,9 @@ function getNominationName($code) {
     return $names[$code] ?? $code;
 }
 
-/**
- * Определяет место участника в рамках номинации и раздела
- * @return int Место (1, 2, 3...) или 0 если не определено
- */
 function getPlaceInNomination($pdo, $nomination, $section, $currentScore, $currentId) {
     try {
-        // Считаем, сколько работ имеют лучший балл ИЛИ такой же балл, но поданы раньше
+        
         $stmt = $pdo->prepare("
             SELECT COUNT(*) + 1 as place 
             FROM applications 
@@ -177,7 +173,7 @@ function getPlaceInNomination($pdo, $nomination, $section, $currentScore, $curre
             'nomination' => $nomination,
             'section' => $section,
             'score' => $currentScore,
-            'created_at' => $currentId, // используем id как временную метку для стабильности
+            'created_at' => $currentId, 
             'id' => $currentId
         ]);
         $result = $stmt->fetch();
@@ -187,9 +183,6 @@ function getPlaceInNomination($pdo, $nomination, $section, $currentScore, $curre
     }
 }
 
-/**
- * Возвращает текст места для диплома
- */
 function getPlaceText($place) {
     $places = [
         1 => 'I (первое)',
