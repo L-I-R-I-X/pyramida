@@ -1,4 +1,8 @@
 <?php
+$configFile = __DIR__ . '/../includes/config.php';
+if (!file_exists($configFile)) {
+    die('Ошибка: Файл config.php не найден. Переименуйте config.example.php в config.php и настройте параметры подключения.');
+}
 require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
@@ -6,21 +10,18 @@ require_once '../includes/functions.php';
 
 requireAuth();
 
-// ✅ Функции экспорта
 function exportParticipants($pdo) {
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="participants_' . date('Y-m-d_H-i-s') . '.csv"');
     
     $output = fopen('php://output', 'w');
-    
-    // Добавляем BOM для корректного отображения кириллицы в Excel
+
     fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
-    
-    // ✅ Заголовки таблицы: ВУЗ → Учебное заведение
+
     fputcsv($output, [
         '№',
         'ФИО',
-        'Учебное заведение',  // ✅ Изменено
+        'Учебное заведение',  
         'Курс',
         'Номинация',
         'Раздел',
@@ -30,8 +31,7 @@ function exportParticipants($pdo) {
         'Статус',
         'Дата заявки'
     ], ';');
-    
-    // ✅ Получаем данные: vuz → educational_institution
+
     $stmt = $pdo->query("
         SELECT id, fio, educational_institution, course, nomination, section, work_title, email, phone, is_published, created_at 
         FROM applications 
@@ -51,7 +51,7 @@ function exportParticipants($pdo) {
         fputcsv($output, [
             $rank++,
             $app['fio'],
-            $app['educational_institution'],  // ✅ Изменено
+            $app['educational_institution'],  
             $app['course'],
             $nominationNames[$app['nomination']] ?? $app['nomination'],
             $app['section'],
@@ -72,15 +72,13 @@ function exportWinners($pdo) {
     header('Content-Disposition: attachment; filename="winners_' . date('Y-m-d_H-i-s') . '.csv"');
     
     $output = fopen('php://output', 'w');
-    
-    // Добавляем BOM для корректного отображения кириллицы в Excel
+
     fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
-    
-    // ✅ Заголовки таблицы: ВУЗ → Учебное заведение
+
     fputcsv($output, [
         '№',
         'ФИО',
-        'Учебное заведение',  // ✅ Изменено
+        'Учебное заведение',  
         'Курс',
         'Номинация',
         'Раздел',
@@ -90,8 +88,7 @@ function exportWinners($pdo) {
         'Оценка жюри',
         'Дата заявки'
     ], ';');
-    
-    // ✅ Получаем данные: vuz → educational_institution
+
     $stmt = $pdo->query("
         SELECT id, fio, educational_institution, course, nomination, section, work_title, email, phone, jury_score, created_at 
         FROM applications 
@@ -112,7 +109,7 @@ function exportWinners($pdo) {
     $rank = 1;
     
     foreach ($applications as $app) {
-        // Сбрасываем счётчик при смене номинации/раздела
+        
         $nominationKey = $app['nomination'] . '_' . $app['section'];
         if ($nominationKey !== $currentNomination . '_' . $currentSection) {
             $rank = 1;
@@ -123,7 +120,7 @@ function exportWinners($pdo) {
         fputcsv($output, [
             $rank++,
             $app['fio'],
-            $app['educational_institution'],  // ✅ Изменено
+            $app['educational_institution'],  
             $app['course'],
             $nominationNames[$app['nomination']] ?? $app['nomination'],
             $app['section'],
@@ -153,14 +150,14 @@ function exportWorks($pdo, $type = 'all') {
     }
     
     if ($type === 'all') {
-        // ✅ Изменено: vuz → educational_institution
+        
         $stmt = $pdo->query("
             SELECT id, fio, educational_institution, nomination, section, work_title, work_file 
             FROM applications 
             ORDER BY nomination, section, created_at DESC
         ");
     } else {
-        // ✅ Изменено: vuz → educational_institution
+        
         $stmt = $pdo->query("
             SELECT id, fio, educational_institution, nomination, section, work_title, work_file 
             FROM applications 
@@ -204,8 +201,7 @@ function exportWorks($pdo, $type = 'all') {
                 $currentNomination = $app['nomination'];
                 $currentSection = $app['section'];
             }
-            
-            // ✅ Изменено: $app['vuz'] → $app['educational_institution'] в манифесте
+
             $manifest .= "{$rank}. {$app['fio']} | {$app['educational_institution']} | {$app['nomination']} | {$app['section']}\n";
             $manifest .= "   Файл: {$zipName}\n";
             $manifest .= "   Название работы: {$app['work_title']}\n\n";
@@ -228,7 +224,6 @@ function exportWorks($pdo, $type = 'all') {
     exit;
 }
 
-// ✅ Обработка запроса
 $exportType = $_GET['type'] ?? '';
 
 if ($exportType === 'participants') {
@@ -241,7 +236,6 @@ if ($exportType === 'participants') {
     exportWorks($pdo, 'published');
 }
 
-// Получаем статистику
 try {
     $stmt = $pdo->query("SELECT COUNT(*) as total FROM applications");
     $totalParticipants = $stmt->fetch()['total'];
@@ -260,84 +254,6 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Экспорт данных — Админ-панель</title>
     <link rel="stylesheet" href="../assets/css/style.css">
-    <style>
-        .export-section {
-            margin-bottom: 40px;
-        }
-        .export-section h2 {
-            font-size: 1.4rem;
-            margin-bottom: 20px;
-            color: #1A1A1A;
-            border-bottom: 2px solid #FF6B00;
-            padding-bottom: 10px;
-        }
-        .export-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 20px;
-        }
-        .export-card {
-            background: #FFFFFF;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .export-card h3 {
-            font-size: 1.2rem;
-            margin-bottom: 15px;
-            color: #1A1A1A;
-        }
-        .export-card p {
-            color: #555555;
-            margin-bottom: 15px;
-            line-height: 1.6;
-        }
-        .export-card ul {
-            margin-left: 20px;
-            margin-bottom: 20px;
-            color: #1A1A1A;
-        }
-        .export-card li {
-            margin-bottom: 8px;
-        }
-        .export-btn {
-            display: inline-block;
-            background: #FF6B00;
-            color: #FFFFFF;
-            padding: 12px 24px;
-            border-radius: 4px;
-            text-decoration: none;
-            font-weight: 500;
-            transition: background 0.3s;
-        }
-        .export-btn:hover {
-            background: #E55E00;
-        }
-        .export-btn.secondary {
-            background: #1A1A1A;
-        }
-        .export-btn.secondary:hover {
-            background: #333333;
-        }
-        .export-info {
-            background: #FFF3E0;
-            border-left: 4px solid #FF6B00;
-            padding: 15px;
-            margin-top: 20px;
-            border-radius: 4px;
-        }
-        .export-info p {
-            margin: 0;
-            color: #1A1A1A;
-            font-size: 0.9rem;
-        }
-        .warning-box {
-            background: #FFF3CD;
-            border-left: 4px solid #FFC107;
-            padding: 15px;
-            margin-top: 20px;
-            border-radius: 4px;
-        }
         .warning-box p {
             margin: 0;
             color: #856404;

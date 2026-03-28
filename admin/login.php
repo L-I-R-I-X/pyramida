@@ -1,8 +1,10 @@
 <?php
+require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
+require_once '../includes/functions.php';
+require_once '../includes/csrf.php';
 
-// Если уже авторизован — сразу в админку
 if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
     header('Location: applications.php');
     exit;
@@ -11,15 +13,22 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $login = $_POST['login'] ?? '';
-    $password = $_POST['password'] ?? '';
-    
-    if (login($login, $password)) {
-        // Успешный вход — редирект в админку
-        header('Location: applications.php');
-        exit;
+    // CSRF validation
+    if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
+        $error = 'Ошибка безопасности: недействительный токен';
     } else {
-        $error = 'Неверный логин или пароль';
+        $login = $_POST['login'] ?? '';
+        $password = $_POST['password'] ?? '';
+        
+        // Валидация входных данных
+        if (empty($login) || empty($password)) {
+            $error = 'Введите логин и пароль';
+        } elseif (login($login, $password)) {
+            header('Location: applications.php');
+            exit;
+        } else {
+            $error = 'Неверный логин или пароль';
+        }
     }
 }
 ?>
@@ -30,65 +39,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Вход в админ-панель — Пирамида</title>
     <link rel="stylesheet" href="../assets/css/style.css">
-    <style>
-        body {
-            background: #F5F5F5;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-        }
-        .login-container {
-            background: #FFFFFF;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 400px;
-        }
-        .login-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .login-header h1 {
-            color: #1A1A1A;
-            font-size: 1.5rem;
-            margin-bottom: 10px;
-        }
-        .login-header .logo {
-            display: block;
-            margin: 0 auto 15px;
-            width: 60px;
-            height: auto;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: #1A1A1A;
-        }
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #888888;
-            border-radius: 4px;
-            font-size: 1rem;
-            box-sizing: border-box;
-        }
-        .form-group input:focus {
-            outline: none;
-            border-color: #FF6B00;
-        }
-        .btn-login {
-            width: 100%;
-            padding: 12px;
-            background: #FF6B00;
-            color: #FFFFFF;
-            border: none;
             border-radius: 4px;
             font-size: 1rem;
             font-weight: 600;
@@ -134,6 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
         
         <form method="POST">
+            <?php csrfField(); ?>
             <div class="form-group">
                 <label for="login">Логин</label>
                 <input type="text" id="login" name="login" required autocomplete="username">

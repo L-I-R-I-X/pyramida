@@ -1,5 +1,5 @@
 <?php
-// Локальные настройки БД
+
 $host = 'localhost';
 $dbname = 'pyramida';
 $username = 'root';
@@ -14,22 +14,18 @@ $options = [
 ];
 
 try {
-    // Подключение без выбора БД
-    $pdo = new PDO($dsn, $username, $password, $options);
     
-    // Создаём базу данных, если не существует
+    $pdo = new PDO($dsn, $username, $password, $options);
+
     $pdo->exec("CREATE DATABASE IF NOT EXISTS `$dbname` 
                 DEFAULT CHARACTER SET utf8mb4 
                 COLLATE utf8mb4_unicode_ci");
-    
-    // Выбираем базу данных
+
     $pdo->exec("USE `$dbname`");
-    
-    // ✅ Инициализация сессий в БД
+
     require_once __DIR__ . '/session_handler.php';
     $sessionHandler = new DatabaseSessionHandler($pdo);
-    
-    // ✅ Регистрируем обработчик ДО запуска сессии
+
     if (session_status() === PHP_SESSION_NONE) {
         session_set_save_handler($sessionHandler, true);
         session_start();

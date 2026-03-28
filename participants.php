@@ -1,4 +1,8 @@
 <?php
+$configFile = __DIR__ . '/includes/config.php';
+if (!file_exists($configFile)) {
+    die('Ошибка: Файл config.php не найден. Переименуйте config.example.php в config.php и настройте параметры подключения.');
+}
 require_once 'includes/config.php';
 require_once 'includes/db.php';
 require_once 'includes/functions.php';
@@ -12,7 +16,7 @@ if ($showTable !== '1') {
 }
 
 try {
-    // ✅ Изменено: vuz → educational_institution
+    
     $stmt = $pdo->query("
         SELECT id, fio, educational_institution, course, nomination, section, is_published, created_at 
         FROM applications 
@@ -23,7 +27,6 @@ try {
     $participants = [];
 }
 
-// Группировка по номинациям и разделам
 $groupedParticipants = [];
 foreach ($participants as $participant) {
     $nomination = $participant['nomination'] ?? 'Без номинации';

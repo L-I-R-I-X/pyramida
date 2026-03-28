@@ -1,4 +1,8 @@
 <?php
+$configFile = __DIR__ . '/../includes/config.php';
+if (!file_exists($configFile)) {
+    die('Ошибка: Файл config.php не найден. Переименуйте config.example.php в config.php и настройте параметры подключения.');
+}
 require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
@@ -17,7 +21,7 @@ if (isset($_GET['success'])) {
 $applicationId = $_GET['id'] ?? 0;
 
 try {
-    // ✅ Изменено: vuz → educational_institution
+    
     $stmt = $pdo->prepare("
         SELECT id, fio, educational_institution, course, nomination, section, email, phone, work_file, work_title, is_published, jury_score, created_at 
         FROM applications 
@@ -35,30 +39,38 @@ if (!$application) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $publish = isset($_POST['publish']) ? (int)$_POST['publish'] : 0;
-    $score = isset($_POST['jury_score']) && $_POST['jury_score'] !== '' ? (int)$_POST['jury_score'] : null;
-    
-    if ($score !== null) {
-        $score = max(0, min(10, $score));
-    }
-    
-    try {
-        $stmt = $pdo->prepare("
-            UPDATE applications 
-            SET is_published = :published, jury_score = :score 
-            WHERE id = :id
-        ");
-        $stmt->execute([
-            'published' => $publish,
-            'score' => $score,
-            'id' => $applicationId
-        ]);
-        
-        header('Location: moderation.php?id=' . $applicationId . '&success=1');
-        exit;
-    } catch (PDOException $e) {
-        $message = 'Ошибка обновления статуса';
+    // CSRF validation
+    if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
+        $message = 'Ошибка безопасности: недействительный токен';
         $messageType = 'error';
+    } else {
+        $publish = isset($_POST['publish']) ? (int)$_POST['publish'] : 0;
+        $score = isset($_POST['jury_score']) && $_POST['jury_score'] !== '' ? (int)$_POST['jury_score'] : null;
+        
+        if ($score !== null) {
+            $score = max(0, min(10, $score));
+        }
+        
+        try {
+            $stmt = $pdo->prepare("
+                UPDATE applications 
+                SET is_published = :published, jury_score = :score 
+                WHERE id = :id
+            ");
+            $stmt->execute([
+                'published' => $publish,
+                'score' => $score,
+                'id' => $applicationId
+            ]);
+            
+            header('Location: moderation.php?id=' . $applicationId . '&success=1');
+            exit;
+        } catch (PDOException $e) {
+            $message = 'Ошибка обновления статуса';
+            $messageType = 'error';
+        }
+    }
+}
     }
 }
 
@@ -72,206 +84,6 @@ $originalPath = '../uploads/originals/' . $application['work_file'];
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Модерация работы — Админ-панель</title>
     <link rel="stylesheet" href="../assets/css/style.css">
-    <style>
-        .admin-layout {
-            display: flex;
-            min-height: 100vh;
-        }
-        .admin-sidebar {
-            width: 250px;
-            background: #1A1A1A;
-            color: #FFFFFF;
-            padding: 20px;
-        }
-        .admin-sidebar h2 {
-            font-size: 1.2rem;
-            margin-bottom: 30px;
-            color: #FF6B00;
-        }
-        .admin-sidebar nav {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .admin-sidebar a {
-            color: #FFFFFF;
-            text-decoration: none;
-            padding: 10px 15px;
-            border-radius: 4px;
-            transition: background 0.3s;
-        }
-        .admin-sidebar a:hover,
-        .admin-sidebar a.active {
-            background: #FF6B00;
-        }
-        .admin-content {
-            flex: 1;
-            padding: 30px;
-            background: #F5F5F5;
-        }
-        .admin-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-        .admin-header h1 {
-            font-size: 1.8rem;
-            color: #1A1A1A;
-        }
-        .moderation-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-        }
-        .work-preview {
-            background: #FFFFFF;
-            padding: 20px;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .work-preview img {
-            width: 100%;
-            height: auto;
-            border-radius: 4px;
-        }
-        .work-info {
-            background: #FFFFFF;
-            padding: 20px;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .info-row {
-            display: flex;
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #F5F5F5;
-        }
-        .info-row:last-child {
-            border-bottom: none;
-        }
-        .info-label {
-            width: 150px; /* ✅ Чуть шире для "Учебное заведение" */
-            color: #888888;
-            font-size: 0.9rem;
-        }
-        .info-value {
-            color: #1A1A1A;
-            font-weight: 500;
-        }
-        .status-indicator {
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            display: inline-block;
-        }
-        .status-published {
-            background: #d4edda;
-            color: #155724;
-        }
-        .status-draft {
-            background: #f8d7da;
-            color: #721c24;
-        }
-        .moderation-form {
-            margin-top: 30px;
-            padding-top: 30px;
-            border-top: 1px solid #F5F5F5;
-        }
-        .moderation-actions {
-            display: flex;
-            gap: 15px;
-            margin-top: 20px;
-        }
-        .btn-publish {
-            background: #FF6B00;
-            color: #FFFFFF;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 4px;
-            font-size: 1rem;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-        }
-        .btn-unpublish {
-            background: #1A1A1A;
-            color: #FFFFFF;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 4px;
-            font-size: 1rem;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-        }
-        .btn-back {
-            background: #F5F5F5;
-            color: #1A1A1A;
-            padding: 12px 24px;
-            border: 1px solid #888888;
-            border-radius: 4px;
-            font-size: 1rem;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-        }
-        .alert {
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-        }
-        .alert-success {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-        }
-        .alert-error {
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-        }
-        .file-download {
-            margin-top: 15px;
-        }
-        .file-download a {
-            color: #FF6B00;
-            text-decoration: none;
-        }
-        .moderation-score {
-            margin: 25px 0;
-            padding: 20px;
-            background: #F5F5F5;
-            border-radius: 4px;
-        }
-        .moderation-score h3 {
-            font-size: 1.1rem;
-            margin-bottom: 10px;
-            color: #1A1A1A;
-        }
-        .score-input-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .score-input-group input {
-            width: 80px;
-            padding: 10px;
-            border: 1px solid #888888;
-            border-radius: 4px;
-            font-size: 1rem;
-            text-align: center;
-        }
-        .score-input-group input:focus {
-            outline: none;
-            border-color: #FF6B00;
-        }
-        .score-hint {
-            color: #888888;
-            font-size: 0.9rem;
-        }
-    </style>
 </head>
 <body>
     <div class="admin-layout">

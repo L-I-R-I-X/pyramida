@@ -1,4 +1,8 @@
 <?php
+$configFile = __DIR__ . '/../includes/config.php';
+if (!file_exists($configFile)) {
+    die('Ошибка: Файл config.php не найден. Переименуйте config.example.php в config.php и настройте параметры подключения.');
+}
 require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
@@ -52,92 +56,6 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Настройки — Админ-панель</title>
     <link rel="stylesheet" href="../assets/css/style.css">
-    <style>
-        .admin-layout {
-            display: flex;
-            min-height: 100vh;
-        }
-        .admin-sidebar {
-            width: 250px;
-            background: #1A1A1A;
-            color: #FFFFFF;
-            padding: 20px;
-        }
-        .admin-sidebar h2 {
-            font-size: 1.2rem;
-            margin-bottom: 30px;
-            color: #FF6B00;
-        }
-        .admin-sidebar nav {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .admin-sidebar a {
-            color: #FFFFFF;
-            text-decoration: none;
-            padding: 10px 15px;
-            border-radius: 4px;
-            transition: background 0.3s;
-        }
-        .admin-sidebar a:hover,
-        .admin-sidebar a.active {
-            background: #FF6B00;
-        }
-        .admin-content {
-            flex: 1;
-            padding: 30px;
-            background: #F5F5F5;
-        }
-        .admin-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-        .admin-header h1 {
-            font-size: 1.8rem;
-            color: #1A1A1A;
-        }
-        .settings-card {
-            background: #FFFFFF;
-            padding: 25px;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        .settings-card h2 {
-            font-size: 1.3rem;
-            margin-bottom: 20px;
-            color: #1A1A1A;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #F5F5F5;
-        }
-        .setting-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 0;
-            border-bottom: 1px solid #F5F5F5;
-        }
-        .setting-item:last-child {
-            border-bottom: none;
-        }
-        .setting-label {
-            flex: 1;
-            padding-right: 20px;
-        }
-        .setting-label h3 {
-            font-size: 1rem;
-            margin-bottom: 5px;
-            color: #1A1A1A;
-        }
-        .setting-label p {
-            font-size: 0.85rem;
-            color: #888888;
-            margin: 0;
-        }
-        .setting-control {
             display: flex;
             align-items: center;
             justify-content: flex-end;

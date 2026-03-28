@@ -1,4 +1,8 @@
 <?php
+$configFile = __DIR__ . '/../includes/config.php';
+if (!file_exists($configFile)) {
+    die('Ошибка: Файл config.php не найден. Переименуйте config.example.php в config.php и настройте параметры подключения.');
+}
 require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
@@ -7,7 +11,7 @@ require_once '../includes/functions.php';
 requireAuth();
 
 try {
-    // ✅ Изменено: vuz → educational_institution
+    
     $stmt = $pdo->query("
         SELECT id, fio, educational_institution, course, nomination, section, email, phone, work_file, is_published, created_at 
         FROM applications 
@@ -18,7 +22,6 @@ try {
     $applications = [];
 }
 
-// ✅ Рассчитываем количество опубликованных работ
 $publishedCount = 0;
 foreach ($applications as $app) {
     if ($app['is_published']) {
@@ -31,7 +34,7 @@ $published = $_GET['published'] ?? '';
 
 if ($published !== '') {
     try {
-        // ✅ Изменено: vuz → educational_institution
+        
         $stmt = $pdo->prepare("
             SELECT id, fio, educational_institution, course, nomination, section, email, phone, work_file, is_published, created_at 
             FROM applications 
@@ -51,6 +54,7 @@ if ($published !== '') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Заявки — Админ-панель</title>
     <link rel="stylesheet" href="../assets/css/style.css">
+<<<<<<< HEAD
     <style>
         .admin-filters {
             display: flex;
@@ -130,6 +134,8 @@ if ($published !== '') {
             color: #888888;
         }
     </style>
+=======
+>>>>>>> c10c8a008ab768e8c97646b827c9e2f43b1706a7
 </head>
 <body>
     <div class="admin-layout">
