@@ -1,11 +1,13 @@
 <?php
 if (!defined('BASE_URL')) {
+    // ✅ Фолбэк, если BASE_URL не определён (на случай прямого включения)
     define('BASE_URL', 'http://localhost/pyramida/');
 }
 ?>
 <aside class="admin-sidebar">
     <h2>🏛️ Пирамида</h2>
     
+    <!-- Выделенное имя админа -->
     <div class="admin-user-info">
         <span class="admin-user-icon">👤</span>
         <span class="admin-user-name"><?php echo htmlspecialchars(getAdminLogin()); ?></span>
