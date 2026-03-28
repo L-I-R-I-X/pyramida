@@ -1,18 +1,19 @@
 <?php
-$configFile = __DIR__ . '/includes/config.php';
-if (!file_exists($configFile)) {
-    die('Ошибка: Файл config.php не найден. Переименуйте config.example.php в config.php и настройте параметры подключения.');
-}
-require_once 'includes/config.php';
-require_once 'includes/db.php';
-require_once 'includes/functions.php';
+// Контроллер для страницы регистрации
+require_once __DIR__ . '/includes/config.php';
+require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/functions.php';
 
+// Логика: получаем данные из сессии
 $success = isset($_GET['success']);
 $errors = $_SESSION['form_errors'] ?? [];
 $formData = $_SESSION['form_data'] ?? [];
 
+// Очищаем сессию после получения данных
 unset($_SESSION['form_errors']);
 unset($_SESSION['form_data']);
+
+// Представление (view)
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -41,7 +42,6 @@ unset($_SESSION['form_data']);
                         <h2>📋 Информация об участии</h2>
                         
                         <ul class="requirements-list">
-                            <!-- ✅ Изменено: ВУЗов → учебных заведений -->
                             <li><strong>Участники:</strong> студенты архитектурных и художественных учебных заведений</li>
                             <li><strong>Взнос:</strong> участие бесплатное</li>
                             <li><strong>Формат:</strong> JPG, JPEG (от 150 до 300 dpi)</li>
@@ -88,7 +88,6 @@ unset($_SESSION['form_data']);
                                        value="<?php echo htmlspecialchars($formData['fio'] ?? ''); ?>">
                             </div>
                             
-                            <!-- ✅ Изменено: vuz → educational_institution -->
                             <div class="form-group">
                                 <label for="educational_institution">Учебное заведение *</label>
                                 <input type="text" id="educational_institution" name="educational_institution" required 

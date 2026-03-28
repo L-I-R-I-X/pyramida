@@ -163,27 +163,32 @@ function getNominationName($code) {
 
 function getPlaceInNomination($pdo, $nomination, $section, $currentScore, $currentId) {
     try {
-        
+        // Получаем всех опубликованных участников в той же номинации и разделе с оценками
         $stmt = $pdo->prepare("
-            SELECT COUNT(*) + 1 as place 
+            SELECT id, jury_score, created_at 
             FROM applications 
             WHERE is_published = 1 
             AND nomination = :nomination 
-            AND section = :section 
-            AND (
-                jury_score > :score 
-                OR (jury_score = :score AND (created_at < :created_at OR id < :id))
-            )
+            AND section = :section
+            AND jury_score IS NOT NULL
+            ORDER BY jury_score DESC, created_at ASC, id ASC
         ");
         $stmt->execute([
             'nomination' => $nomination,
-            'section' => $section,
-            'score' => $currentScore,
-            'created_at' => $currentId, 
-            'id' => $currentId
+            'section' => $section
         ]);
-        $result = $stmt->fetch();
-        return $result['place'] ?? 1;
+        $results = $stmt->fetchAll();
+        
+        // Находим место текущего участника
+        $place = 0;
+        foreach ($results as $index => $row) {
+            if ($row['id'] == $currentId) {
+                $place = $index + 1;
+                break;
+            }
+        }
+        
+        return $place > 0 ? $place : 1;
     } catch (PDOException $e) {
         return 0;
     }

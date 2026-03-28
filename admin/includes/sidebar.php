@@ -4,6 +4,10 @@ if (!file_exists($configFile)) {
     die('Ошибка: Файл config.php не найден. Переименуйте config.example.php в config.php и настройте параметры подключения.');
 }
 require_once __DIR__ . '/../../includes/config.php';
+require_once __DIR__ . '/../../includes/auth.php';
+
+// Проверяем авторизацию для всех страниц админки
+requireAuth();
 ?>
 <aside class="admin-sidebar">
     <h2>🏛️ Пирамида</h2>
