@@ -42,4 +42,12 @@ ini_set('max_file_uploads', 5);
 if (!is_dir($basePath . '/logs')) {
     mkdir($basePath . '/logs', 0755, true);
 }
+
+// Настройка сессий для хранения в БД
+// Будет активировано после подключения к БД в db.php
+ini_set('session.use_strict_mode', 1);
+ini_set('session.use_only_cookies', 1);
+ini_set('session.cookie_httponly', 1);
+ini_set('session.cookie_samesite', 'Strict');
+
 ?>

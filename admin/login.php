@@ -1,6 +1,4 @@
 <?php
-require_once '../includes/config.php';
-require_once '../includes/db.php';
 require_once '../includes/auth.php';
 require_once '../includes/functions.php';
 require_once '../includes/csrf.php';
@@ -12,6 +10,7 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
 
 $error = '';
 $remainingAttempts = null;
+$waitTime = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // CSRF validation
@@ -24,28 +23,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Валидация входных данных
         if (empty($login) || empty($password)) {
             $error = 'Введите логин и пароль';
-        } elseif (login($login, $password)) {
-            header('Location: applications.php');
-            exit;
         } else {
-            // Проверяем количество оставшихся попыток
-            $ipAddress = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-            $attemptKey = 'login_attempts_' . $ipAddress;
+            $result = login($login, $password);
             
-            if (isset($_SESSION[$attemptKey])) {
-                $attempts = $_SESSION[$attemptKey];
-                $maxAttempts = 5;
-                $remaining = $maxAttempts - $attempts['count'];
-                
-                if ($remaining <= 0) {
-                    $waitTime = ceil(300 - (time() - $attempts['time']));
-                    $error = "Слишком много неудачных попыток. Попробуйте через $waitTime сек.";
+            if ($result['success']) {
+                header('Location: applications.php');
+                exit;
+            } else {
+                if ($result['blocked']) {
+                    $waitTime = $result['wait_time'];
+                    $error = "Слишком много неудачных попыток. Попробуйте через {$waitTime} сек.";
+                    $remainingAttempts = 0;
                 } else {
                     $error = 'Неверный логин или пароль';
-                    $remainingAttempts = $remaining;
+                    $remainingAttempts = $result['attempts_left_before_block'] ?? null;
                 }
-            } else {
-                $error = 'Неверный логин или пароль';
             }
         }
     }
