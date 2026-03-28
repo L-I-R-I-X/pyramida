@@ -1,4 +1,8 @@
 <?php
+$configFile = __DIR__ . '/../../includes/config.php';
+if (!file_exists($configFile)) {
+    die('Ошибка: Файл config.php не найден. Переименуйте config.example.php в config.php и настройте параметры подключения.');
+}
 require_once __DIR__ . '/../../includes/config.php';
 ?>
 <aside class="admin-sidebar">

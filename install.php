@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
             CREATE TABLE IF NOT EXISTS applications (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 fio VARCHAR(255) NOT NULL,
-                vuz VARCHAR(255) NOT NULL,
+                educational_institution VARCHAR(255) NOT NULL,
                 course TINYINT NOT NULL,
                 nomination VARCHAR(100) NOT NULL,
                 section VARCHAR(100) NOT NULL,
