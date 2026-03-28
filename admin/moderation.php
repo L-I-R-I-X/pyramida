@@ -44,30 +44,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = 'Ошибка безопасности: недействительный токен';
         $messageType = 'error';
     } else {
-        $publish = isset($_POST['publish']) ? (int)$_POST['publish'] : 0;
-        $score = isset($_POST['jury_score']) && $_POST['jury_score'] !== '' ? (int)$_POST['jury_score'] : null;
-        
-        if ($score !== null) {
-            $score = max(0, min(10, $score));
-        }
-        
-        try {
-            $stmt = $pdo->prepare("
-                UPDATE applications 
-                SET is_published = :published, jury_score = :score 
-                WHERE id = :id
-            ");
-            $stmt->execute([
-                'published' => $publish,
-                'score' => $score,
-                'id' => $applicationId
-            ]);
+        // Обработка удаления работы
+        if (isset($_POST['delete_work'])) {
+            try {
+                // Удаляем файлы
+                $galleryPath = '../uploads/gallery/' . $application['work_file'];
+                $originalPath = '../uploads/originals/' . $application['work_file'];
+                
+                if (file_exists($galleryPath)) {
+                    unlink($galleryPath);
+                }
+                if (file_exists($originalPath)) {
+                    unlink($originalPath);
+                }
+                
+                // Удаляем запись из БД
+                $stmt = $pdo->prepare("DELETE FROM applications WHERE id = :id");
+                $stmt->execute(['id' => $applicationId]);
+                
+                header('Location: applications.php?deleted=1');
+                exit;
+            } catch (PDOException $e) {
+                $message = 'Ошибка при удалении работы';
+                $messageType = 'error';
+            }
+        } else {
+            // Обработка обновления оценки и статуса публикации
+            $publish = isset($_POST['is_published']) && $_POST['is_published'] === '1' ? 1 : 0;
+            $score = isset($_POST['jury_score']) && $_POST['jury_score'] !== '' ? (int)$_POST['jury_score'] : null;
             
-            header('Location: moderation.php?id=' . $applicationId . '&success=1');
-            exit;
-        } catch (PDOException $e) {
-            $message = 'Ошибка обновления статуса';
-            $messageType = 'error';
+            if ($score !== null) {
+                $score = max(0, min(10, $score));
+            }
+            
+            try {
+                $stmt = $pdo->prepare("
+                    UPDATE applications 
+                    SET is_published = :published, jury_score = :score 
+                    WHERE id = :id
+                ");
+                $stmt->execute([
+                    'published' => $publish,
+                    'score' => $score,
+                    'id' => $applicationId
+                ]);
+                
+                header('Location: moderation.php?id=' . $applicationId . '&success=1');
+                exit;
+            } catch (PDOException $e) {
+                $message = 'Ошибка обновления статуса';
+                $messageType = 'error';
+            }
         }
     }
 }
@@ -178,10 +205,10 @@ $originalPath = '../uploads/originals/' . $application['work_file'];
                         </span>
                     </div>
                     
-                    <form method="POST" class="moderation-form">
+                    <form method="POST" class="moderation-form" onsubmit="return confirmDelete(this);">
                         <h3>Действия модератора</h3>
                         <p style="color: #888888; margin-bottom: 20px;">
-                            Отметьте работу для публикации в галерее на сайте
+                            Отметьте работу для публикации в галерее на сайте. Оценка жюри может быть выставлена отдельно.
                         </p>
                         
                         <div class="moderation-score">
@@ -208,15 +235,52 @@ $originalPath = '../uploads/originals/' . $application['work_file'];
                             <?php endif; ?>
                         </div>
                         
-                        <div class="moderation-actions">
-                            <?php if ($application['is_published']): ?>
-                                <button type="submit" name="unpublish" class="btn-unpublish">Снять с публикации</button>
-                            <?php else: ?>
-                                <button type="submit" name="publish" class="btn-publish">Опубликовать в галерее</button>
-                            <?php endif; ?>
-                            <input type="hidden" name="publish" value="<?php echo $application['is_published'] ? 0 : 1; ?>">
+                        <div class="moderation-toggle">
+                            <h3>Публикация в галерее</h3>
+                            <p style="color: #888888; margin-bottom: 15px;">
+                                Включите, чтобы работа отображалась в галерее на сайте
+                            </p>
+                            
+                            <label class="toggle-switch">
+                                <input type="checkbox" 
+                                       name="is_published" 
+                                       value="1" 
+                                       <?php echo $application['is_published'] ? 'checked' : ''; ?>>
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-label">
+                                    <?php echo $application['is_published'] ? 'Опубликовано' : 'Не опубликовано'; ?>
+                                </span>
+                            </label>
                         </div>
+                        
+                        <div class="moderation-actions">
+                            <button type="submit" name="save_changes" class="btn-save">Принять изменения</button>
+                            <button type="submit" name="delete_work" class="btn-delete" onclick="return confirm('Вы уверены, что хотите удалить эту работу? Это действие нельзя отменить.');">Удалить работу</button>
+                        </div>
+                        
+                        <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
                     </form>
+                    
+                    <script>
+                    function confirmDelete(form) {
+                        if (form.querySelector('[name="delete_work"]') && form.querySelector('[name="delete_work"]').clicked) {
+                            return confirm('Вы уверены, что хотите удалить эту работу? Это действие нельзя отменить.');
+                        }
+                        return true;
+                    }
+                    
+                    // Обновление текста статуса при переключении слайдера
+                    document.addEventListener('DOMContentLoaded', function() {
+                        var toggle = document.querySelector('input[name="is_published"]');
+                        var label = document.querySelector('.toggle-label');
+                        
+                        if (toggle) {
+                            toggle.addEventListener('change', function() {
+                                label.textContent = this.checked ? 'Опубликовано' : 'Не опубликовано';
+                            });
+                        }
+                    });
+                    </script>
                 </div>
             </div>
         </main>

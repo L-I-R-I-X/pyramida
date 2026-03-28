@@ -10,6 +10,19 @@ require_once '../includes/functions.php';
 
 requireAuth();
 
+$message = '';
+$messageType = '';
+
+if (isset($_GET['success'])) {
+    $message = 'Статус работы обновлён';
+    $messageType = 'success';
+}
+
+if (isset($_GET['deleted'])) {
+    $message = 'Работа успешно удалена';
+    $messageType = 'success';
+}
+
 try {
     
     $stmt = $pdo->query("
@@ -142,6 +155,12 @@ if ($published !== '') {
             <div class="admin-header">
                 <h1>Заявки участников</h1>   
             </div>
+            
+            <?php if ($message): ?>
+                <div class="alert alert-<?php echo $messageType; ?>" style="margin-bottom: 20px;">
+                    <?php echo htmlspecialchars($message); ?>
+                </div>
+            <?php endif; ?>
             
             <!-- ✅ Карточки статистики в едином стиле -->
             <div class="admin-stats">
