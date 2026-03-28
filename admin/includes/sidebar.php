@@ -16,7 +16,10 @@ if (!defined('BASE_URL')) {
         <a href="moderation.php" class="<?php echo basename($_SERVER['PHP_SELF']) === 'moderation.php' ? 'active' : ''; ?>">Модерация</a>
         <a href="export.php" class="<?php echo basename($_SERVER['PHP_SELF']) === 'export.php' ? 'active' : ''; ?>">Экспорт данных</a>
         <a href="settings.php" class="<?php echo basename($_SERVER['PHP_SELF']) === 'settings.php' ? 'active' : ''; ?>">Настройки</a>
+        
+        <!-- ✅ Исправлено: используем BASE_URL вместо хардкода -->
         <a href="<?php echo BASE_URL; ?>" target="_blank">На сайт</a>
-    <a href="logout.php">Выход</a>
+        
+        <a href="logout.php">Выход</a>
     </nav>
 </aside>
