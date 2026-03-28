@@ -6,6 +6,7 @@ if (!file_exists($configFile)) {
 require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
+require_once '../includes/csrf.php';
 require_once '../includes/functions.php';
 
 requireAuth();
@@ -247,10 +248,10 @@ $originalPath = '../uploads/originals/' . $application['work_file'];
                                        value="1" 
                                        <?php echo $application['is_published'] ? 'checked' : ''; ?>>
                                 <span class="toggle-slider"></span>
-                                <span class="toggle-label">
-                                    <?php echo $application['is_published'] ? 'Опубликовано' : 'Не опубликовано'; ?>
-                                </span>
                             </label>
+                            <span class="toggle-label" style="margin-left: 15px; font-weight: 500; color: #1A1A1A;">
+                                <?php echo $application['is_published'] ? 'Опубликовано' : 'Не опубликовано'; ?>
+                            </span>
                         </div>
                         
                         <div class="moderation-actions">
@@ -274,7 +275,7 @@ $originalPath = '../uploads/originals/' . $application['work_file'];
                         var toggle = document.querySelector('input[name="is_published"]');
                         var label = document.querySelector('.toggle-label');
                         
-                        if (toggle) {
+                        if (toggle && label) {
                             toggle.addEventListener('change', function() {
                                 label.textContent = this.checked ? 'Опубликовано' : 'Не опубликовано';
                             });
