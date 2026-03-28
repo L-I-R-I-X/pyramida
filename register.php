@@ -1,10 +1,7 @@
 <?php
+require_once 'includes/config.php';
 require_once 'includes/db.php';
 require_once 'includes/functions.php';
-
-if (!defined('BASE_URL')) {
-    define('BASE_URL', 'http://localhost/pyramida/');
-}
 
 $success = isset($_GET['success']);
 $errors = $_SESSION['form_errors'] ?? [];

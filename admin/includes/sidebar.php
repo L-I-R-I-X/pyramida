@@ -1,8 +1,5 @@
 <?php
-if (!defined('BASE_URL')) {
-    // ✅ Фолбэк, если BASE_URL не определён (на случай прямого включения)
-    define('BASE_URL', 'http://localhost/pyramida/');
-}
+require_once __DIR__ . '/../../includes/config.php';
 ?>
 <aside class="admin-sidebar">
     <h2>🏛️ Пирамида</h2>

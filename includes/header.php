@@ -1,7 +1,5 @@
 <?php
-if (!defined('BASE_URL')) {
-    require_once __DIR__ . '/config.php';
-}
+require_once 'config.php';
 
 if (!function_exists('getSetting')) {
     require_once __DIR__ . '/db.php';
