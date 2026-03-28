@@ -1548,40 +1548,46 @@ input:focus + .toggle-slider {
     color: #1A1A1A;
 }
 
-.toggle-switch {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    cursor: pointer;
-}
-
-.toggle-slider {
+.moderation-toggle .toggle-switch {
     position: relative;
+    display: inline-block;
     width: 60px;
-    height: 30px;
-    background-color: #ccc;
-    border-radius: 30px;
-    transition: 0.4s;
+    height: 34px;
+    margin: 0;
+    cursor: auto;
 }
 
-.toggle-slider:before {
+.moderation-toggle .toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #cccccc;
+    transition: 0.4s;
+    border-radius: 34px;
+}
+
+.moderation-toggle .toggle-slider:before {
     position: absolute;
     content: "";
-    height: 22px;
-    width: 22px;
+    height: 26px;
+    width: 26px;
     left: 4px;
     bottom: 4px;
     background-color: white;
-    border-radius: 50%;
     transition: 0.4s;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-input:checked + .toggle-slider {
+.moderation-toggle input:checked + .toggle-slider {
     background-color: #FF6B00;
 }
 
-input:checked + .toggle-slider:before {
-    transform: translateX(30px);
+.moderation-toggle input:checked + .toggle-slider:before {
+    transform: translateX(26px);
 }
 
 .toggle-label {
@@ -1956,10 +1962,36 @@ input:checked + .toggle-slider:before {
     padding-top: 30px;
     border-top: 1px solid #F5F5F5;
 }
+
 .moderation-actions {
     display: flex;
     gap: 15px;
     margin-top: 20px;
+    align-items: center;
+}
+
+.btn-save {
+    background: #FF6B00;
+    color: #FFFFFF;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-delete {
+    background: #C82333;
+    color: #FFFFFF;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
 }
 .btn-publish {
     background: #FF6B00;
