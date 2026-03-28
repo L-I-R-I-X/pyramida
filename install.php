@@ -13,9 +13,9 @@ if (file_exists($installLockFile)) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
     // Получаем данные из формы
     $host = $_POST['db_host'] ?? 'localhost';
-    $dbname = $_POST['db_name'] ?? 'pyramida';
-    $username = $_POST['db_username'] ?? 'root';
-    $password = $_POST['db_password'] ?? '';
+    $dbname = $_POST['db_name'] ?? 'pyramida_1';
+    $username = $_POST['db_username'] ?? 'pyramida_1';
+    $password = $_POST['db_password'] ?? '%t5+66qh}&RMMT&L';
     
     $adminLogin = $_POST['admin_login'] ?? 'admin';
     $adminPassword = $_POST['admin_password'] ?? '';
@@ -35,11 +35,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             ]);
-
-            $pdo->exec("CREATE DATABASE IF NOT EXISTS `$dbname` 
-                        DEFAULT CHARACTER SET utf8mb4 
-                        COLLATE utf8mb4_unicode_ci");
-            
             $pdo->exec("USE `$dbname`");
 
             $pdo->exec("
@@ -107,12 +102,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
             $stmt = $pdo->prepare("
                 INSERT INTO admins (login, password_hash) VALUES
                 (:login, :password_hash)
+                ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash)
             ");
             $stmt->execute([
                 'login' => $adminLogin,
                 'password_hash' => $passwordHash
             ]);
-            $success[] = "Администратор создан (логин: " . htmlspecialchars($adminLogin) . ")";
+            $success[] = "Администратор создан/обновлён (логин: " . htmlspecialchars($adminLogin) . ")";
 
             // Создаём файл конфигурации db.php
             $configContent = "<?php\n\n\$host = '" . addslashes($host) . "';\n\$dbname = '" . addslashes($dbname) . "';\n\$username = '" . addslashes($username) . "';\n\$password = '" . addslashes($password) . "';\n\n\$dsn = \"mysql:host=\$host;dbname=\$dbname;charset=utf8mb4\";\n\n\$options = [\n    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,\n    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,\n    PDO::ATTR_EMULATE_PREPARES => false,\n];\n\ntry {\n    \n    \$pdo = new PDO(\$dsn, \$username, \$password, \$options);\n\n    \$pdo->exec(\"USE `\$dbname`\");\n\n    require_once __DIR__ . '/session_handler.php';\n    \$sessionHandler = new DatabaseSessionHandler(\$pdo);\n\n    if (session_status() === PHP_SESSION_NONE) {\n        session_set_save_handler(\$sessionHandler, true);\n        session_start();\n    }\n    \n} catch (PDOException \$e) {\n    error_log('Database connection failed: ' . \$e->getMessage());\n    die('Ошибка подключения к базе данных: ' . htmlspecialchars(\$e->getMessage()));\n}\n?>\n";
@@ -135,10 +131,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
             
             foreach ($dirs as $dir) {
                 if (!is_dir($dir)) {
-                    mkdir($dir, 0755, true);
+                    if (!mkdir($dir, 0755, true)) {
+                        $errors[] = "Не удалось создать папку: $dir. Проверьте права доступа.";
+                    }
                 }
             }
-            $success[] = 'Папки созданы';
+            if (empty(array_filter($errors, function($e) { return strpos($e, 'Не удалось создать папку:') !== false; }))) {
+                $success[] = 'Папки созданы';
+            }
             
             // Создаём файл-блокировку установки
             file_put_contents($installLockFile, 'installed');
@@ -300,8 +300,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
                 
                 <div class="form-group">
                     <label for="db_password">Пароль БД:</label>
-                    <input type="password" id="db_password" name="db_password" value="" required>
-                    <small style="color: #666;">Пароль от базы данных (уже настроен)</small>
+                    <input type="password" id="db_password" name="db_password" value="" placeholder="Введите пароль БД или оставьте по умолчанию" required>
+                    <small style="color: #666;">Пароль по умолчанию уже установлен. Измените, если требуется.</small>
                 </div>
                 
                 <h2>👤 Учётная запись администратора</h2>
