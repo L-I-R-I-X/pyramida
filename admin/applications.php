@@ -54,7 +54,6 @@ if ($published !== '') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Заявки — Админ-панель</title>
     <link rel="stylesheet" href="../assets/css/style.css">
-<<<<<<< HEAD
     <style>
         .admin-filters {
             display: flex;
@@ -134,8 +133,6 @@ if ($published !== '') {
             color: #888888;
         }
     </style>
-=======
->>>>>>> c10c8a008ab768e8c97646b827c9e2f43b1706a7
 </head>
 <body>
     <div class="admin-layout">

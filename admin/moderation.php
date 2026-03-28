@@ -71,8 +71,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
-    }
-}
 
 $galleryPath = '../uploads/gallery/' . $application['work_file'];
 $originalPath = '../uploads/originals/' . $application['work_file'];

@@ -25,7 +25,7 @@ $orderBy = $sortOrders[$gallerySortOrder] ?? 'created_at DESC';
 
 try {
     $stmt = $pdo->query("
-        SELECT id, fio, vuz, course, nomination, section, work_file, work_title, created_at 
+        SELECT id, fio, educational_institution, course, nomination, section, work_file, work_title, created_at 
         FROM applications 
         WHERE is_published = 1 
         ORDER BY nomination, section, $orderBy
@@ -65,8 +65,8 @@ if ($filterNomination || $filterEducationalInstitution || $filterCourse) {
     }
     
     if ($filterEducationalInstitution) { 
-        $conditions[] = 'vuz LIKE :vuz'; 
-        $params['vuz'] = '%' . $filterEducationalInstitution . '%'; 
+        $conditions[] = 'educational_institution LIKE :educational_institution'; 
+        $params['educational_institution'] = '%' . $filterEducationalInstitution . '%'; 
     }
     
     if ($filterCourse) {
@@ -74,7 +74,7 @@ if ($filterNomination || $filterEducationalInstitution || $filterCourse) {
         $params['course'] = (int)$filterCourse;
     }
     
-    $sql = "SELECT id, fio, vuz, course, nomination, section, work_file, work_title, created_at 
+    $sql = "SELECT id, fio, educational_institution, course, nomination, section, work_file, work_title, created_at 
             FROM applications 
             WHERE " . implode(' AND ', $conditions) . " 
             ORDER BY nomination, section, $orderBy";
@@ -207,8 +207,7 @@ $nominationNames = [
                                                 </div>
                                                 <div class="gallery-item-info">
                                                     <h3><?php echo htmlspecialchars($work['fio']); ?></h3>
-                                                    <!-- ✅ Изменено: work-vuz → work-educational-institution -->
-                                                    <p class="work-educational-institution"><?php echo htmlspecialchars($work['vuz']); ?></p>
+                                                    <p class="work-educational-institution"><?php echo htmlspecialchars($work['educational_institution']); ?></p>
                                                     <p class="work-course"><?php echo $work['course']; ?> курс</p>
                                                     <?php if (!empty($work['work_title'])): ?>
                                                         <p class="work-title"><?php echo htmlspecialchars($work['work_title']); ?></p>

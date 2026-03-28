@@ -37,7 +37,7 @@ function generateCertificate($participantData, $type = 'certificate') {
     $nomination = $nominationNames[$participantData['nomination']] ?? $participantData['nomination'];
     $section = $participantData['section'] ?? '';
     $fio = $participantData['fio'];
-    $vuz = $participantData['vuz'];
+    $vuz = $participantData['educational_institution'] ?? '';
     $date = date('d.m.Y');
     
     if ($type === 'diploma') {
@@ -153,7 +153,7 @@ function downloadCertificate($pdo, $applicationId, $type = 'certificate') {
     }
     
     $stmt = $pdo->prepare("
-        SELECT id, fio, vuz, course, nomination, section, work_title, is_published, jury_score, created_at 
+        SELECT id, fio, educational_institution, course, nomination, section, work_title, is_published, jury_score, created_at 
         FROM applications 
         WHERE id = :id
     ");

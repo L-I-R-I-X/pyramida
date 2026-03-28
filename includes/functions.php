@@ -86,8 +86,10 @@ function sanitizeInput($data) {
 }
 
 function redirect($url, $message = '', $type = 'success') {
-    if ($message) {
+    if (session_status() === PHP_SESSION_NONE) {
         session_start();
+    }
+    if ($message) {
         $_SESSION['flash_message'] = $message;
         $_SESSION['flash_type'] = $type;
     }
