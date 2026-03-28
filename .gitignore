@@ -1,32 +1,7 @@
-```
-# Logs and temp files
-*.log
-*.tmp
-*.swp
+# Examples 1:
+# Project with only source/config files - no artifacts present
+# Expected output: (empty - output nothing)
 
-# Environment files
-.env
-.env.local
-*.env.*
-
-# Dependencies
-node_modules/
-.venv/
-venv/
-__pycache__/
-.mypy_cache/
-.pytest_cache/
-
-# Build artifacts
-dist/
-build/
-target/
-
-# Editors
-.vscode/
-.idea/
-
-# System files
-.DS_Store
-Thumbs.db
-```
+# Example 2:
+# Project with artifacts like pycache, dist, .env.local, .vscode
+# Expected output includes compiled files, dependencies, editor configs, etc.
