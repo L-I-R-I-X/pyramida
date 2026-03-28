@@ -4,18 +4,15 @@ require 'vendor/autoload.php';
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
-// Входные данные (можно получать из базы данных)
 $participantName = $_GET['fio'] ?? 'Иванов Иван Иванович';
 $nominationName  = $_GET['nomination'] ?? 'Архитектурная композиция';
 $sectionName     = $_GET['section'] ?? 'Абстрактная';
 $issueDate       = date('d.m.Y');
-$certificateType = $_GET['type'] ?? 'certificate'; // 'certificate' или 'diploma'
-$placeText       = $_GET['place'] ?? ''; // 'I (первое)', 'II (второе)', и т.д.
+$certificateType = $_GET['type'] ?? 'certificate';
+$placeText       = $_GET['place'] ?? '';
 
-// Абсолютный путь к директории скрипта
 $basePath = realpath(__DIR__); 
 
-// ✅ Массив для преобразования кодов номинаций в читаемые названия
 $nominationNames = [
     'arch_composition' => 'Архитектурная композиция',
     'art_graphics' => 'Художественно-проектная графика',
@@ -23,10 +20,8 @@ $nominationNames = [
     'photography' => 'Фотография'
 ];
 
-// ✅ Преобразуем код номинации в читаемое название
 $nominationDisplay = $nominationNames[$nominationName] ?? $nominationName;
 
-// Настройки Dompdf
 $options = new Options();
 $options->set('isHtml5ParserEnabled', true);
 $options->set('isRemoteEnabled', false);
@@ -35,7 +30,6 @@ $options->set('defaultFont', 'DejaVu Sans');
 
 $dompdf = new Dompdf($options);
 
-// Текст в зависимости от типа документа
 if ($certificateType === 'diploma' && $placeText) {
     $docTitle = 'ДИПЛОМ';
     $docText = "занял(а) $placeText место";
@@ -44,12 +38,10 @@ if ($certificateType === 'diploma' && $placeText) {
     $docText = 'принял(-а) участие';
 }
 
-// Пути к файлам подписей
 $signatureMaximovaPath = $basePath . '/assets/img/signature_maximova.png';
 $signatureZhigadloPath = $basePath . '/assets/img/signature_zhigadlo.png';
 $stampPath = $basePath . '/assets/img/stamp.png';
 
-// Начинаем сборку HTML
 ob_start();
 ?>
 <!DOCTYPE html>
@@ -70,7 +62,6 @@ ob_start();
             line-height: 1.3;
         }
         
-        /* Рамка — 15мм от края */
         .frame {
             position: absolute;
             top: 15mm;
@@ -81,7 +72,6 @@ ob_start();
             box-sizing: border-box;
         }
 
-        /* Верхняя часть: тёмно-серый фон — минимальные отступы */
         .header {
             background-color: #1A1A1A;
             color: #FFFFFF;
@@ -106,7 +96,6 @@ ob_start();
             margin-top: 1mm;
         }
 
-        /* ЗАГОЛОВОК: 42pt */
         .title {
             text-align: center;
             color: #FF6B00;
@@ -118,14 +107,12 @@ ob_start();
             line-height: 1;
         }
 
-        /* Оранжевый разделитель */
         .separator {
             height: 2px;
             background-color: #FF6B00;
             margin: 0 40mm 4mm 40mm;
         }
 
-        /* Основной контент */
         .content {
             padding: 0 25mm;
             text-align: center;
@@ -154,19 +141,17 @@ ob_start();
             margin: 2mm 0 4mm 0;
         }
 
-        /* ✅ Минимальный отступ у номинации */
         .nomination {
             font-size: 12pt;
             text-align: left;
-            margin: 3mm 0 3mm 0; /* Минимальный отступ снизу */
+            margin: 3mm 0 3mm 0;
             color: #444;
             line-height: 1.5;
         }
 
-        /* Подвал — ещё выше */
         .footer {
             position: absolute;
-            bottom: 38mm; /* Ещё выше */
+            bottom: 38mm;
             left: 20mm;
             right: 20mm;
         }
@@ -174,7 +159,7 @@ ob_start();
         .signatures-container {
             display: flex;
             justify-content: space-between;
-            gap: 5mm; /* Минимальный зазор между подписями */
+            gap: 5mm;
             margin-bottom: 5mm;
         }
 
@@ -183,11 +168,10 @@ ob_start();
             text-align: left;
         }
 
-        /* ✅ Минимальные отступы в подписях */
         .signature-title {
             font-size: 9pt;
             font-weight: 600;
-            margin-bottom: 0; /* Убран отступ */
+            margin-bottom: 0;
             line-height: 1.1;
         }
 
@@ -195,7 +179,7 @@ ob_start();
             font-size: 8pt;
             color: #666;
             font-style: italic;
-            margin-bottom: 1mm; /* Минимальный отступ */
+            margin-bottom: 1mm;
             display: block;
         }
 
@@ -227,7 +211,6 @@ ob_start();
             display: inline-block;
         }
 
-        /* Печать */
         .stamp-img {
             position: absolute;
             bottom: 48mm;
@@ -288,7 +271,6 @@ ob_start();
 
         <div class="footer">
             <div class="signatures-container">
-                <!-- Подпись 1: Максимова М. В. -->
                 <div class="signature-block">
                     <div class="signature-title">
                         Заведующая кафедрой АКП ФГБОУ ВО «СибАДИ»<br>
@@ -308,7 +290,6 @@ ob_start();
                     <br>
                 </div>
                 
-                <!-- Подпись 2: Жигадло А. П. -->
                 <div class="signature-block">
                     <div class="signature-title">
                         Ректор ФГБОУ ВО «СибАДИ»
@@ -346,7 +327,6 @@ $dompdf->loadHtml($html);
 $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
 
-// Скачивание файла
 $filename = ($certificateType === 'diploma' ? 'Diploma' : 'Certificate') . '_' . 
             preg_replace('/[^a-zA-Zа-яА-Я0-9]/u', '_', $participantName) . '.pdf';
 
