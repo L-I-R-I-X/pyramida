@@ -283,24 +283,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
                 <div class="form-group">
                     <label for="db_host">Хост БД:</label>
                     <input type="text" id="db_host" name="db_host" value="localhost" required>
+                    <small style="color: #666;">Обычно localhost</small>
                 </div>
                 
                 <div class="form-group">
                     <label for="db_name">Имя базы данных:</label>
-                    <input type="text" id="db_name" name="db_name" value="pyramida" required>
+                    <input type="text" id="db_name" name="db_name" value="pyramida_1" required>
+                    <small style="color: #666;">База данных уже должна быть создана на хостинге</small>
                 </div>
                 
                 <div class="form-group">
                     <label for="db_username">Пользователь БД:</label>
-                    <input type="text" id="db_username" name="db_username" value="root" required>
+                    <input type="text" id="db_username" name="db_username" value="pyramida_1" required>
+                    <small style="color: #666;">Пользователь с правами доступа к базе данных</small>
                 </div>
                 
                 <div class="form-group">
                     <label for="db_password">Пароль БД:</label>
-                    <input type="password" id="db_password" name="db_password" value="">
+                    <input type="password" id="db_password" name="db_password" value="" required>
+                    <small style="color: #666;">Пароль от базы данных (уже настроен)</small>
                 </div>
                 
                 <h2>👤 Учётная запись администратора</h2>
+                <p style="color: #666; margin-bottom: 15px;">Придумайте логин и пароль для доступа к панели администратора сайта</p>
                 
                 <div class="form-group">
                     <label for="admin_login">Логин администратора:</label>
@@ -310,6 +315,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
                 <div class="form-group">
                     <label for="admin_password">Пароль администратора:</label>
                     <input type="password" id="admin_password" name="admin_password" required minlength="6">
+                    <small style="color: #666;">Минимум 6 символов</small>
                 </div>
                 
                 <button type="submit" name="install" class="btn">🚀 Установить сайт</button>
