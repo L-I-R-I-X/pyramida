@@ -34,6 +34,11 @@ ini_set('display_errors', 1);
 ini_set('log_errors', 1);
 ini_set('error_log', $basePath . '/logs/php_errors.log');
 
+// Настройки загрузки файлов (должны быть также в php.ini сервера)
+ini_set('upload_max_filesize', '10M');
+ini_set('post_max_size', '12M');
+ini_set('max_file_uploads', 5);
+
 if (!is_dir($basePath . '/logs')) {
     mkdir($basePath . '/logs', 0755, true);
 }
