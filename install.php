@@ -105,19 +105,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
 
             // Создаем или обновляем администратора
             $passwordHash = password_hash($adminPassword, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare("
-                INSERT INTO admins (login, password_hash) VALUES
-                (:login, :password_hash)
-                ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash)
-            ");
-            $stmt->execute([
-                'login' => $adminLogin,
-                'password_hash' => $passwordHash
-            ]);
-            $success[] = "Администратор создан/обновлён (логин: " . htmlspecialchars($adminLogin) . ")";
+            
+            // Проверяем, существует ли администратор
+            $stmt = $pdo->prepare("SELECT id FROM admins WHERE login = :login");
+            $stmt->execute(['login' => $adminLogin]);
+            $existingAdmin = $stmt->fetch();
+            
+            if ($existingAdmin) {
+                // Обновляем пароль существующего администратора
+                $stmt = $pdo->prepare("UPDATE admins SET password_hash = :password_hash WHERE login = :login");
+                $stmt->execute([
+                    'login' => $adminLogin,
+                    'password_hash' => $passwordHash
+                ]);
+                $success[] = "Пароль администратора обновлён (логин: " . htmlspecialchars($adminLogin) . ")";
+            } else {
+                // Создаём нового администратора
+                $stmt = $pdo->prepare("INSERT INTO admins (login, password_hash) VALUES (:login, :password_hash)");
+                $stmt->execute([
+                    'login' => $adminLogin,
+                    'password_hash' => $passwordHash
+                ]);
+                $success[] = "Администратор создан (логин: " . htmlspecialchars($adminLogin) . ")";
+            }
 
             // Создаём файл конфигурации db.php
-            $configContent = "<?php\n\n// Учётные данные БД для хостинга pyramida.sibadi.org\n\$host = '" . addslashes($host) . "';\n\$dbname = '" . addslashes($dbname) . "';\n\$username = '" . addslashes($username) . "';\n\$password = '" . addslashes($password) . "';\n\n\$dsn = \"mysql:host=\$host;dbname=\$dbname;charset=utf8mb4\";\n\n\$options = [\n    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,\n    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,\n    PDO::ATTR_EMULATE_PREPARES => false,\n];\n\ntry {\n    \n    \$pdo = new PDO(\$dsn, \$username, \$password, \$options);\n\n    \$pdo->exec(\"USE `\$dbname`\");\n    \n    // Создаем таблицу сессий, если она не существует\n    \$pdo->exec(\"CREATE TABLE IF NOT EXISTS sessions (\n        id VARCHAR(128) PRIMARY KEY,\n        data TEXT,\n        expires INT(11) UNSIGNED NOT NULL,\n        INDEX idx_expires (expires)\n    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci\");\n\n    require_once __DIR__ . '/DatabaseSessionHandler.php';\n    \$sessionHandler = new DatabaseSessionHandler(\$pdo);\n\n    if (session_status() === PHP_SESSION_NONE) {\n        session_set_save_handler(\$sessionHandler, true);\n        session_start();\n    }\n    \n} catch (PDOException \$e) {\n    error_log('Database connection failed: ' . \$e->getMessage());\n    die('Ошибка подключения к базе данных: ' . htmlspecialchars(\$e->getMessage()));\n}\n?>\n";
+            $configContent = "<?php\n\n// Учётные данные БД для хостинга pyramida.sibadi.org\n\$host = '" . addslashes($host) . "';\n\$dbname = '" . addslashes($dbname) . "';\n\$username = '" . addslashes($username) . "';\n\$password = '" . addslashes($password) . "';\n\n\$dsn = \"mysql:host=\$host;dbname=\$dbname;charset=utf8mb4\";\n\n\$options = [\n    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,\n    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,\n    PDO::ATTR_EMULATE_PREPARES => false,\n];\n\ntry {\n    \n    \$pdo = new PDO(\$dsn, \$username, \$password, \$options);\n\n    \$pdo->exec(\"USE `\$dbname`\");\n    \n    // Создаем таблицу сессий, если она не существует\n    \$pdo->exec(\"CREATE TABLE IF NOT EXISTS sessions (\n        id VARCHAR(128) PRIMARY KEY,\n        data TEXT,\n        expires INT(11) UNSIGNED NOT NULL,\n        INDEX idx_expires (expires)\n    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci\");\n\n    require_once __DIR__ . '/DatabaseSessionHandler.php';\n    \$sessionHandler = new DatabaseSessionHandler(\$pdo);\n\n    // Регистрируем обработчик, но НЕ запускаем сессию автоматически\n    // Сессия будет запущена при первом обращении к \$_SESSION в auth.php или других файлах\n    if (session_status() === PHP_SESSION_NONE) {\n        session_set_save_handler(\$sessionHandler, true);\n        \n        // Настраиваем параметры сессии\n        ini_set('session.use_strict_mode', 1);\n        ini_set('session.use_only_cookies', 1);\n        ini_set('session.cookie_httponly', 1);\n        ini_set('session.cookie_samesite', 'Strict');\n    }\n    \n} catch (PDOException \$e) {\n    error_log('Database connection failed: ' . \$e->getMessage());\n    die('Ошибка подключения к базе данных: ' . htmlspecialchars(\$e->getMessage()));\n}\n?>\n";
             
             $configFile = __DIR__ . '/includes/db.php';
             if (file_put_contents($configFile, $configContent)) {

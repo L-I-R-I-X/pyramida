@@ -31,9 +31,16 @@ try {
     require_once __DIR__ . '/DatabaseSessionHandler.php';
     $sessionHandler = new DatabaseSessionHandler($pdo);
 
+    // Регистрируем обработчик, но НЕ запускаем сессию автоматически
+    // Сессия будет запущена при первом обращении к $_SESSION в auth.php или других файлах
     if (session_status() === PHP_SESSION_NONE) {
         session_set_save_handler($sessionHandler, true);
-        session_start();
+        
+        // Настраиваем параметры сессии
+        ini_set('session.use_strict_mode', 1);
+        ini_set('session.use_only_cookies', 1);
+        ini_set('session.cookie_httponly', 1);
+        ini_set('session.cookie_samesite', 'Strict');
     }
     
 } catch (PDOException $e) {

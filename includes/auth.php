@@ -13,13 +13,13 @@ if (!file_exists($dbFile)) {
 }
 require_once $dbFile;
 
+// Запускаем сессию сразу после подключения к БД
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 function requireAuth() {
-    // Сессия уже запущена в db.php, но проверяем на всякий случай
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
-    
-    // Регенерация session ID для защиты от session fixation
+    // Сессия уже запущена в этом файле
     if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
         $loginUrl = BASE_URL . 'admin/login.php';
         if (!headers_sent()) {
@@ -33,16 +33,13 @@ function requireAuth() {
 }
 
 function getAdminLogin() {
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
     return $_SESSION['admin_login'] ?? 'admin';
 }
 
 function login($login, $password) {
     global $pdo;
     
-    // Сессия уже должна быть запущена в db.php
+    // Сессия уже должна быть запущена в auth.php
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
@@ -99,7 +96,6 @@ function login($login, $password) {
 }
 
 function logout() {
-    
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
