@@ -9,7 +9,7 @@ require_once '../includes/auth.php';
 require_once '../includes/functions.php';
 
 // Явно инициализируем сессию
-initSession();
+initSession($pdo);
 
 requireAuth();
 

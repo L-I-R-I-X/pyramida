@@ -6,16 +6,20 @@
 /**
  * Инициализация сессии с использованием DatabaseSessionHandler
  * Вызывается один раз при первом обращении к функциям авторизации
+ * @param object|null $pdo PDO подключение (опционально)
+ * @return bool true если сессия успешно инициализирована
  */
-function initSession() {
-    global $pdo;
-    
+function initSession($pdo = null) {
     // Если сессия уже запущена - ничего не делаем
     if (session_status() !== PHP_SESSION_NONE) {
         return true;
     }
     
     // Проверяем, что PDO подключен
+    if ($pdo === null) {
+        global $pdo;
+    }
+    
     if (!isset($pdo)) {
         // Подключаем config и db если они ещё не подключены
         $configFile = __DIR__ . '/config.php';
@@ -32,22 +36,27 @@ function initSession() {
         } else {
             die('Ошибка: Файл db.php не найден. Запустите install.php для настройки базы данных.');
         }
-    }
-    
-    // Запускаем сессию (обработчик уже установлен в db.php)
-    $result = @session_start();
-    
-    if ($result === false) {
-        error_log('Failed to start session. Session status: ' . session_status());
+        
+        // После подключения db.php у нас должна быть функция initDatabaseSession
+        if (function_exists('initDatabaseSession')) {
+            return initDatabaseSession($pdo);
+        }
+        
         return false;
     }
     
-    return true;
+    // Используем функцию из db.php для инициализации сессии
+    if (function_exists('initDatabaseSession')) {
+        return initDatabaseSession($pdo);
+    }
+    
+    return false;
 }
 
-// НЕ инициализируем сессию автоматически при подключении файла
-// Сессия будет инициализирована при явном вызове initSession() или при первом обращении к $_SESSION
-
+/**
+ * Проверка авторизации пользователя
+ * Перенаправляет на страницу входа если пользователь не авторизован
+ */
 function requireAuth() {
     // Инициализируем сессию если ещё не запущена
     if (session_status() === PHP_SESSION_NONE) {
@@ -66,6 +75,10 @@ function requireAuth() {
     }
 }
 
+/**
+ * Получить логин администратора из сессии
+ * @return string Логин администратора или 'admin' по умолчанию
+ */
 function getAdminLogin() {
     // Инициализируем сессию если ещё не запущена
     if (session_status() === PHP_SESSION_NONE) {
@@ -85,7 +98,7 @@ function login($login, $password) {
     
     // Убеждаемся, что сессия запущена
     if (session_status() === PHP_SESSION_NONE) {
-        initSession();
+        initSession($pdo);
     }
     
     // Проверка количества неудачных попыток входа для этого IP
@@ -139,6 +152,9 @@ function login($login, $password) {
     }
 }
 
+/**
+ * Функция выхода из системы
+ */
 function logout() {
     // Сессия должна быть уже запущена
     if (session_status() === PHP_SESSION_NONE) {

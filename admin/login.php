@@ -6,17 +6,15 @@
 // 1. Сначала подключаем config.php для определения путей и настроек
 require_once '../includes/config.php';
 
-// 2. Подключаем db.php для подключения к БД и регистрации обработчика сессий
+// 2. Подключаем db.php для подключения к БД
 require_once '../includes/db.php';
 
-// 3. Запускаем сессию ПЕРЕД любым выводом HTML и подключением других файлов
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-// 4. Теперь подключаем остальные файлы
+// 3. Подключаем auth.php (сессия будет запущена позже через initSession)
 require_once '../includes/auth.php';
 require_once '../includes/csrf.php';
+
+// Инициализируем сессию ПЕРЕД любым выводом HTML
+initSession($pdo);
 
 // Если уже авторизован - редирект на страницу заявок
 if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
