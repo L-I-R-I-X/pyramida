@@ -1,47 +1,47 @@
-```php
-# Compiled and build artifacts
-*.pyc
+# Environment and temporary files
+.env
+.env.local
+*.env.*
+*.tmp
+*.log
+*.swp
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swo
+
+# Python specific
 __pycache__/
-*.o
-*.obj
-*.class
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Build and distribution
+dist/
+build/
+*.out
 *.exe
 *.dll
 *.so
 *.a
-*.out
+*.o
+*.obj
 
 # Dependencies
 node_modules/
 venv/
 .venv/
-.env
-.env.local
-.env.*
-
-# Logs and temp files
-*.log
-*.tmp
-*.swp
-*.swo
-
-# Build directories
-dist/
-build/
-target/
+.mypy_cache/
+.pytest_cache/
+.coverage
 coverage/
 htmlcov/
-
-# Editors
-.vscode/
-.idea/
 
 # System files
 .DS_Store
 Thumbs.db
-
-# Cache directories
-.mypy_cache/
-.pytest_cache/
-.gradle/
-```
+.zsh_history
+.bash_history
