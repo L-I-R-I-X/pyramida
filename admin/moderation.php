@@ -49,8 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (isset($_POST['delete_work'])) {
             try {
                 // Удаляем файлы
-                $galleryPath = '../uploads/gallery/' . $application['work_file'];
-                $originalPath = '../uploads/originals/' . $application['work_file'];
+                $galleryPath = UPLOAD_DIR_GALLERY . $application['work_file'];
+                $originalPath = UPLOAD_DIR_ORIGINALS . $application['work_file'];
                 
                 if (file_exists($galleryPath)) {
                     unlink($galleryPath);
@@ -100,8 +100,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$galleryPath = '../uploads/gallery/' . $application['work_file'];
-$originalPath = '../uploads/originals/' . $application['work_file'];
+$galleryPath = UPLOAD_DIR_GALLERY . $application['work_file'];
+$originalPath = UPLOAD_DIR_ORIGINALS . $application['work_file'];
 ?>
 <!DOCTYPE html>
 <html lang="ru">

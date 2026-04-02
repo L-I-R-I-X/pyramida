@@ -121,13 +121,14 @@ $nominationNames = [
                                                     $placeText = $place > 0 ? getPlaceText($place) : '';
                                                     
                                                     $medal = $index < 3 ? ['🥇', '🥈', '🥉'][$index] : ($index + 1) . '.';
-                                                    $galleryPath = 'uploads/gallery/' . $winner['work_file'];
+                                                    $galleryPath = UPLOAD_DIR_GALLERY . $winner['work_file'];
+                                                    $galleryUrlPath = 'uploads/gallery/' . $winner['work_file'];
                                                 ?>
                                                     <tr class="<?php echo $index < 3 ? 'winner-row winner-' . ($index + 1) : ''; ?>">
                                                         <td class="medal-cell"><?php echo $medal; ?></td>
                                                         <td class="work-preview-cell">
                                                             <?php if (file_exists($galleryPath)): ?>
-                                                                <img src="<?php echo $galleryPath; ?>" alt="Работа <?php echo htmlspecialchars($winner['fio']); ?>">
+                                                                <img src="<?php echo $galleryUrlPath; ?>" alt="Работа <?php echo htmlspecialchars($winner['fio']); ?>">
                                                             <?php else: ?>
                                                                 <span class="no-image">Нет изображения</span>
                                                             <?php endif; ?>

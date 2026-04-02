@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/includes/config.php';
+
 $installed = false;
 $errors = [];
 $success = [];
@@ -140,12 +142,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
             }
 
             $dirs = [
-                __DIR__ . '/uploads/originals',
-                __DIR__ . '/uploads/gallery',
-                __DIR__ . '/cache/fonts',
-                __DIR__ . '/cache/temp',
-                __DIR__ . '/cache/certificates',
-                __DIR__ . '/logs',
+                UPLOAD_DIR_ORIGINALS,
+                UPLOAD_DIR_GALLERY,
+                CACHE_FONTS_DIR,
+                CACHE_TEMP_DIR,
+                CACHE_CERTIFICATES_DIR,
+                LOGS_DIR,
             ];
             
             foreach ($dirs as $dir) {

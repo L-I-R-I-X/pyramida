@@ -1,1 +1,46 @@
-Nothing should be ignored based on the provided file changes, as they only include PHP source files and configuration files without any build artifacts, dependencies, or temporary files.
+```
+# Logs
+logs/
+*.log
+
+# Cache
+cache/
+
+# Uploads
+uploads/
+
+# Environment
+.env
+.env.local
+.env.*
+
+# Dependencies
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.egg-info/
+dist/
+build/
+target/
+.gradle/
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# System
+.DS_Store
+Thumbs.db
+
+# Other
+*.tmp
+*.temp
+coverage/
+htmlcov/
+.coverage
+.mypy_cache/
+.pytest_cache/
+```

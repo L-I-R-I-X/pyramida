@@ -197,10 +197,11 @@ $nominationNames = [
                                             <div class="gallery-item" data-id="<?php echo $work['id']; ?>">
                                                 <div class="gallery-item-image">
                                                     <?php 
-                                                    $galleryPath = 'uploads/gallery/' . $work['work_file'];
+                                                    $galleryPath = UPLOAD_DIR_GALLERY . $work['work_file'];
+                                                    $galleryUrlPath = 'uploads/gallery/' . $work['work_file'];
                                                     if (file_exists($galleryPath)): 
                                                     ?>
-                                                        <img src="<?php echo $galleryPath; ?>" alt="Работа <?php echo htmlspecialchars($work['fio']); ?>" loading="lazy">
+                                                        <img src="<?php echo $galleryUrlPath; ?>" alt="Работа <?php echo htmlspecialchars($work['fio']); ?>" loading="lazy">
                                                     <?php else: ?>
                                                         <div class="placeholder-image">Изображение не найдено</div>
                                                     <?php endif; ?>
