@@ -1,11 +1,5 @@
 <?php
-$configFile = __DIR__ . '/../../includes/config.php';
-if (!file_exists($configFile)) {
-    die('Ошибка: Файл config.php не найден.');
-}
 require_once __DIR__ . '/../../includes/config.php';
-require_once __DIR__ . '/../../includes/db.php';
-require_once __DIR__ . '/../../includes/functions.php';
 ?>
 <aside class="admin-sidebar">
     <h2>🏛️ Пирамида</h2>

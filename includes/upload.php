@@ -1,8 +1,4 @@
 <?php
-$configFile = __DIR__ . '/config.php';
-if (!file_exists($configFile)) {
-    die('Ошибка: Файл config.php не найден. Переименуйте config.example.php в config.php и настройте параметры подключения.');
-}
 require_once 'config.php';
 require_once 'db.php';
 require_once 'functions.php';

@@ -1,15 +1,15 @@
+```
 # Compiled and build artifacts
 *.pyc
 __pycache__/
 
 # Dependencies
-venv/
-.venv/
+vendor/
+node_modules/
 
 # Logs and temp files
 *.log
 *.tmp
-*.swp
 
 # Environment
 .env
@@ -20,10 +20,20 @@ venv/
 .vscode/
 .idea/
 
-# Coverage reports
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Cache directories
+.cache/
+.mypy_cache/
+.pytest_cache/
 coverage/
 htmlcov/
 .coverage
 
-# Original rules preserved
-*.log
+# Build directories
+dist/
+build/
+target/
+```

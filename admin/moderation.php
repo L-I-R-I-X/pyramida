@@ -5,7 +5,6 @@ if (!file_exists($configFile)) {
 }
 require_once '../includes/config.php';
 require_once '../includes/db.php';
-require_once '../includes/csrf.php';
 require_once '../includes/functions.php';
 
 $message = '';
@@ -36,63 +35,58 @@ if (!$application) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
-        $message = 'Ошибка безопасности: недействительный токен';
-        $messageType = 'error';
+    if (isset($_POST['delete_work'])) {
+        try {
+            $galleryPath = UPLOAD_DIR_GALLERY . $application['work_file'];
+            $originalPath = UPLOAD_DIR_ORIGINALS . $application['work_file'];
+            
+            if (file_exists($galleryPath)) {
+                unlink($galleryPath);
+            }
+            if (file_exists($originalPath)) {
+                unlink($originalPath);
+            }
+            
+            $stmt = $pdo->prepare("DELETE FROM applications WHERE id = :id");
+            $stmt->execute(['id' => $applicationId]);
+            
+            header('Location: applications.php?deleted=1');
+            exit;
+        } catch (PDOException $e) {
+            $message = 'Ошибка при удалении работы';
+            $messageType = 'error';
+        }
     } else {
-        if (isset($_POST['delete_work'])) {
-            try {
-                $galleryPath = UPLOAD_DIR_GALLERY . $application['work_file'];
-                $originalPath = UPLOAD_DIR_ORIGINALS . $application['work_file'];
-                
-                if (file_exists($galleryPath)) {
-                    unlink($galleryPath);
-                }
-                if (file_exists($originalPath)) {
-                    unlink($originalPath);
-                }
-                
-                $stmt = $pdo->prepare("DELETE FROM applications WHERE id = :id");
-                $stmt->execute(['id' => $applicationId]);
-                
-                header('Location: applications.php?deleted=1');
-                exit;
-            } catch (PDOException $e) {
-                $message = 'Ошибка при удалении работы';
-                $messageType = 'error';
-            }
-        } else {
-            $publish = isset($_POST['is_published']) && $_POST['is_published'] === '1' ? 1 : 0;
-            $score = isset($_POST['jury_score']) && $_POST['jury_score'] !== '' ? (int)$_POST['jury_score'] : null;
+        $publish = isset($_POST['is_published']) && $_POST['is_published'] === '1' ? 1 : 0;
+        $score = isset($_POST['jury_score']) && $_POST['jury_score'] !== '' ? (int)$_POST['jury_score'] : null;
+        
+        if ($score !== null) {
+            $score = max(0, min(10, $score));
+        }
+        
+        try {
+            $stmt = $pdo->prepare("
+                UPDATE applications 
+                SET is_published = :published, jury_score = :score 
+                WHERE id = :id
+            ");
+            $stmt->execute([
+                'published' => $publish,
+                'score' => $score,
+                'id' => $applicationId
+            ]);
             
-            if ($score !== null) {
-                $score = max(0, min(10, $score));
-            }
-            
-            try {
-                $stmt = $pdo->prepare("
-                    UPDATE applications 
-                    SET is_published = :published, jury_score = :score 
-                    WHERE id = :id
-                ");
-                $stmt->execute([
-                    'published' => $publish,
-                    'score' => $score,
-                    'id' => $applicationId
-                ]);
-                
-                header('Location: moderation.php?id=' . $applicationId . '&success=1');
-                exit;
-            } catch (PDOException $e) {
-                $message = 'Ошибка обновления статуса';
-                $messageType = 'error';
-            }
+            header('Location: moderation.php?id=' . $applicationId . '&success=1');
+            exit;
+        } catch (PDOException $e) {
+            $message = 'Ошибка обновления статуса';
+            $messageType = 'error';
         }
     }
 }
 
-$galleryPath = UPLOAD_DIR_GALLERY . $application['work_file'];
-$originalPath = UPLOAD_DIR_ORIGINALS . $application['work_file'];
+$galleryUrlPath = BASE_URL . 'uploads/gallery/' . $application['work_file'];
+$originalUrlPath = BASE_URL . 'uploads/originals/' . $application['work_file'];
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -121,10 +115,12 @@ $originalPath = UPLOAD_DIR_ORIGINALS . $application['work_file'];
             <div class="moderation-grid">
                 <div class="work-preview">
                     <h3>Предпросмотр работы</h3>
-                    <?php if (file_exists($galleryPath)): ?>
-                        <img src="<?php echo $galleryPath; ?>" alt="Работа участника">
+                    <?php 
+                    $galleryPathCheck = UPLOAD_DIR_GALLERY . $application['work_file'];
+                    if (file_exists($galleryPathCheck)): ?>
+                        <img src="<?php echo $galleryUrlPath; ?>" alt="Работа участника">
                         <div class="file-download">
-                            <a href="<?php echo $originalPath; ?>" download>Скачать оригинал</a>
+                            <a href="<?php echo $originalUrlPath; ?>" download>Скачать оригинал</a>
                         </div>
                     <?php else: ?>
                         <p style="color: #888888; text-align: center; padding: 40px;">Изображение не найдено</p>
@@ -207,7 +203,7 @@ $originalPath = UPLOAD_DIR_ORIGINALS . $application['work_file'];
                             <button type="submit" name="delete_work" class="btn-delete" onclick="return confirm('Вы уверены, что хотите удалить эту работу?');">Удалить работу</button>
                         </div>
                         
-                        <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
+                        <input type="hidden" name="csrf_token" value="">
                     </form>
                 </div>
             </div>
