@@ -129,8 +129,16 @@ function login($login, $password) {
         // Успешный вход - сбрасываем счётчик попыток
         unset($_SESSION[$attemptKey]);
         
+        // Сохраняем важные данные сессии перед регенерацией
+        $csrfToken = $_SESSION['csrf_token'] ?? null;
+        
         // Регенерация session ID после успешного логина для защиты от session fixation
         session_regenerate_id(true);
+        
+        // Восстанавливаем CSRF токен после регенерации
+        if ($csrfToken) {
+            $_SESSION['csrf_token'] = $csrfToken;
+        }
         
         $_SESSION['admin_logged_in'] = true;
         $_SESSION['admin_login'] = $admin['login'];
