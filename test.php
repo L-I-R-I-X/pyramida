@@ -199,8 +199,25 @@ ob_end_flush();
             'user' => DB_USER
         ]);
         
-        require_once __DIR__ . '/includes/auth.php';
-        addLog('success', 'auth.php подключён, таблицы инициализированы');
+        // Подключаем auth.php с дополнительным логированием
+        $authPath = __DIR__ . '/includes/auth.php';
+        addLog('info', 'Подключение auth.php...', ['path' => $authPath]);
+        
+        require_once $authPath;
+        
+        // Проверяем, существуют ли таблицы после подключения auth.php
+        $stmt = $pdo->query("SHOW TABLES LIKE 'admin_users'");
+        $usersTableExists = $stmt->rowCount() > 0;
+        $stmt = $pdo->query("SHOW TABLES LIKE 'admin_sessions'");
+        $sessionsTableExists = $stmt->rowCount() > 0;
+        
+        addLog($usersTableExists && $sessionsTableExists ? 'success' : 'error', 
+            'auth.php подключён, статус таблиц:', [
+                'admin_users_exists' => $usersTableExists,
+                'admin_sessions_exists' => $sessionsTableExists,
+                'note' => $sessionsTableExists ? '' : 'Таблица admin_sessions НЕ создана - это причина ошибки!'
+            ]
+        );
         
     } catch (Exception $e) {
         addLog('error', 'Ошибка подключения файлов', [
@@ -241,6 +258,15 @@ ob_end_flush();
             "Таблица admin_sessions " . ($sessionsTableExists ? "существует" : "НЕ существует"));
         
         if ($sessionsTableExists) {
+            // Проверяем структуру таблицы sessions
+            try {
+                $stmt = $pdo->query("DESCRIBE admin_sessions");
+                $columns = $stmt->fetchAll();
+                addLog('debug', 'Структура таблицы admin_sessions', $columns);
+            } catch (PDOException $e) {
+                addLog('error', 'Ошибка получения структуры admin_sessions', ['message' => $e->getMessage()]);
+            }
+            
             $stmt = $pdo->query("SELECT COUNT(*) FROM admin_sessions");
             $sessionCount = $stmt->fetchColumn();
             addLog('info', "Количество сессий в таблице: $sessionCount");
@@ -260,6 +286,39 @@ ob_end_flush();
                     $s['session_token'] = substr($s['session_token'], 0, 16) . '...';
                 }
                 addLog('debug', 'Последние сессии в БД', $sessions);
+            }
+        } else {
+            addLog('error', 'КРИТИЧЕСКАЯ ОШИБКА: Таблица admin_sessions не существует!');
+            addLog('info', 'Попытка создать таблицу admin_sessions вручную...', []);
+            try {
+                $pdo->exec("
+                    CREATE TABLE IF NOT EXISTS admin_sessions (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        user_id INT NOT NULL,
+                        session_token VARCHAR(64) UNIQUE NOT NULL,
+                        ip_address VARCHAR(45),
+                        user_agent VARCHAR(255),
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        expires_at TIMESTAMP NOT NULL,
+                        last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (user_id) REFERENCES admin_users(id) ON DELETE CASCADE
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                ");
+                
+                // Проверяем снова
+                $stmt = $pdo->query("SHOW TABLES LIKE 'admin_sessions'");
+                $nowExists = $stmt->rowCount() > 0;
+                addLog($nowExists ? 'success' : 'error', 
+                    'Результат ручного создания таблицы:', [
+                        'created' => $nowExists,
+                        'note' => $nowExists ? 'Таблица успешно создана!' : 'Не удалось создать таблицу - проверьте права доступа'
+                    ]
+                );
+            } catch (PDOException $e) {
+                addLog('error', 'Ошибка ручного создания таблицы', [
+                    'message' => $e->getMessage(),
+                    'code' => $e->getCode()
+                ]);
             }
         }
         
@@ -291,6 +350,43 @@ ob_end_flush();
             addLog('error', 'Поля логин или пароль пусты');
             $authResult = ['success' => false, 'message' => 'Введите логин и пароль'];
         } else {
+            // Перед вызовом authenticate - проверяем таблицу ещё раз
+            try {
+                $stmt = $pdo->query("SHOW TABLES LIKE 'admin_sessions'");
+                $tableExistsBeforeAuth = $stmt->rowCount() > 0;
+                addLog('info', 'Проверка таблицы admin_sessions ПЕРЕД authenticate()', [
+                    'table_exists' => $tableExistsBeforeAuth
+                ]);
+                
+                if (!$tableExistsBeforeAuth) {
+                    addLog('error', 'Таблица admin_sessions НЕ существует перед созданием сессии!');
+                    addLog('info', 'Создаём таблицу принудительно...');
+                    try {
+                        $pdo->exec("
+                            CREATE TABLE IF NOT EXISTS admin_sessions (
+                                id INT AUTO_INCREMENT PRIMARY KEY,
+                                user_id INT NOT NULL,
+                                session_token VARCHAR(64) UNIQUE NOT NULL,
+                                ip_address VARCHAR(45),
+                                user_agent VARCHAR(255),
+                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                expires_at TIMESTAMP NOT NULL,
+                                last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                FOREIGN KEY (user_id) REFERENCES admin_users(id) ON DELETE CASCADE
+                            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                        ");
+                        
+                        $stmt = $pdo->query("SHOW TABLES LIKE 'admin_sessions'");
+                        $nowExists = $stmt->rowCount() > 0;
+                        addLog($nowExists ? 'success' : 'error', 'Результат создания:', ['created' => $nowExists]);
+                    } catch (PDOException $e) {
+                        addLog('error', 'Не удалось создать таблицу', ['message' => $e->getMessage(), 'code' => $e->getCode()]);
+                    }
+                }
+            } catch (PDOException $e) {
+                addLog('error', 'Ошибка проверки таблицы перед authenticate', ['message' => $e->getMessage()]);
+            }
+            
             addLog('info', 'Вызов функции authenticate()');
             
             // Логирование внутри authenticate через хак
@@ -301,6 +397,23 @@ ob_end_flush();
             addLog('debug', 'authenticate() выполнился за ' . round(($endTime - $startTime) * 1000, 2) . ' мс');
             addLog($authResult['success'] ? 'success' : 'error', 
                 'Результат authenticate()', $authResult);
+            
+            // После authenticate - проверяем таблицу и результат
+            try {
+                $stmt = $pdo->query("SHOW TABLES LIKE 'admin_sessions'");
+                $tableExistsAfterAuth = $stmt->rowCount() > 0;
+                addLog('info', 'Проверка таблицы admin_sessions ПОСЛЕ authenticate()', [
+                    'table_exists' => $tableExistsAfterAuth
+                ]);
+                
+                if ($tableExistsAfterAuth) {
+                    $stmt = $pdo->query("SELECT COUNT(*) FROM admin_sessions");
+                    $count = $stmt->fetchColumn();
+                    addLog('debug', 'Количество сессий в БД после попытки входа: ' . $count);
+                }
+            } catch (PDOException $e) {
+                addLog('error', 'Ошибка проверки таблицы после authenticate', ['message' => $e->getMessage()]);
+            }
             
             if ($authResult['success']) {
                 addLog('info', 'ШАГ 6: Успешная аутентификация - проверка cookie после setcookie');

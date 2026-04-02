@@ -31,6 +31,13 @@ function initAuthTables() {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
         
+        // Проверяем, создана ли таблица пользователей
+        $stmt = $pdo->query("SHOW TABLES LIKE 'admin_users'");
+        if ($stmt->rowCount() == 0) {
+            error_log('initAuthTables: Таблица admin_users НЕ была создана');
+            return false;
+        }
+        
         // Таблица сессий
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS admin_sessions (
@@ -46,12 +53,31 @@ function initAuthTables() {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
         
+        // Проверяем, создана ли таблица сессий
+        $stmt = $pdo->query("SHOW TABLES LIKE 'admin_sessions'");
+        if ($stmt->rowCount() == 0) {
+            error_log('initAuthTables: Таблица admin_sessions НЕ была создана');
+            return false;
+        }
+        
         // Создаём индекс для быстрой проверки сессий
-        $pdo->exec("CREATE INDEX IF NOT EXISTS idx_session_token ON admin_sessions(session_token)");
-        $pdo->exec("CREATE INDEX IF NOT EXISTS idx_expires_at ON admin_sessions(expires_at)");
+        try {
+            $pdo->exec("CREATE INDEX IF NOT EXISTS idx_session_token ON admin_sessions(session_token)");
+        } catch (PDOException $e) {
+            // Индекс может уже существовать
+            error_log('initAuthTables warning: idx_session_token - ' . $e->getMessage());
+        }
+        
+        try {
+            $pdo->exec("CREATE INDEX IF NOT EXISTS idx_expires_at ON admin_sessions(expires_at)");
+        } catch (PDOException $e) {
+            // Индекс может уже существовать
+            error_log('initAuthTables warning: idx_expires_at - ' . $e->getMessage());
+        }
         
     } catch (PDOException $e) {
         error_log('initAuthTables error: ' . $e->getMessage());
+        error_log('initAuthTables error code: ' . $e->getCode());
         return false;
     }
     
