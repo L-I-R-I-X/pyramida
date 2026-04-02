@@ -3,17 +3,21 @@ require_once 'config.php';
 
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 
+// Значения по умолчанию - всё показано
+$showParticipants = '1';
+$showWinners = '1';
+$showGallery = '1';
+
 // Проверяем, существует ли файл functions.php и pdo подключен
 if (file_exists(__DIR__ . '/functions.php') && isset($pdo)) {
-    require_once __DIR__ . '/functions.php';
-    $showParticipants = getSetting('show_participants_table', '0');
-    $showWinners = getSetting('show_winners_table', '0');
-    $showGallery = getSetting('show_gallery', '1');
-} else {
-    // Если БД не подключена, используем значения по умолчанию
-    $showParticipants = '0';
-    $showWinners = '0';
-    $showGallery = '1';
+    try {
+        require_once __DIR__ . '/functions.php';
+        $showParticipants = getSetting('show_participants_table', '1');
+        $showWinners = getSetting('show_winners_table', '1');
+        $showGallery = getSetting('show_gallery', '1');
+    } catch (Exception $e) {
+        // Если ошибка при получении настроек, используем значения по умолчанию (всё показано)
+    }
 }
 ?>
 <header class="site-header">
