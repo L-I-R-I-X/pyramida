@@ -1,15 +1,34 @@
 <?php
 /**
- * Обработчик сессий, хранящий данные в базе данных
+ * Database Session Handler
+ * Хранит сессии в базе данных MySQL
  */
 class DatabaseSessionHandler implements SessionHandlerInterface
 {
     private $pdo;
     private $tableName = 'sessions';
-
+    
     public function __construct(PDO $pdo)
     {
         $this->pdo = $pdo;
+        $this->ensureTableExists();
+    }
+    
+    /**
+     * Создаём таблицу сессий если она не существует
+     */
+    private function ensureTableExists(): void
+    {
+        try {
+            $this->pdo->exec("CREATE TABLE IF NOT EXISTS {$this->tableName} (
+                id VARCHAR(128) PRIMARY KEY,
+                data TEXT,
+                expires INT(11) UNSIGNED NOT NULL,
+                INDEX idx_expires (expires)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        } catch (PDOException $e) {
+            error_log('Failed to create sessions table: ' . $e->getMessage());
+        }
     }
 
     public function open($savePath, $sessionName): bool
@@ -43,17 +62,10 @@ class DatabaseSessionHandler implements SessionHandlerInterface
         try {
             $expires = time() + ini_get('session.gc_maxlifetime');
             
-            // Проверяем, существует ли запись
-            $stmt = $this->pdo->prepare("SELECT id FROM {$this->tableName} WHERE id = :id");
-            $stmt->execute([':id' => $id]);
-            
-            if ($stmt->fetch()) {
-                // Обновляем
-                $stmt = $this->pdo->prepare("UPDATE {$this->tableName} SET data = :data, expires = :expires WHERE id = :id");
-            } else {
-                // Вставляем
-                $stmt = $this->pdo->prepare("INSERT INTO {$this->tableName} (id, data, expires) VALUES (:id, :data, :expires)");
-            }
+            // Используем INSERT ... ON DUPLICATE KEY UPDATE для атомарности
+            $stmt = $this->pdo->prepare("INSERT INTO {$this->tableName} (id, data, expires) 
+                VALUES (:id, :data, :expires)
+                ON DUPLICATE KEY UPDATE data = :data, expires = :expires");
             
             return $stmt->execute([
                 ':id' => $id,

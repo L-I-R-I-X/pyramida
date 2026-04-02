@@ -8,11 +8,7 @@ require_once '../includes/db.php';
 require_once '../includes/auth.php';
 require_once '../includes/functions.php';
 
-// Явно инициализируем сессию
-initSession();
-
-requireAuth();
-
+// Сессия будет инициализирована в sidebar.php перед requireAuth()
 $message = '';
 $messageType = '';
 
@@ -27,7 +23,6 @@ if (isset($_GET['deleted'])) {
 }
 
 try {
-    
     $stmt = $pdo->query("
         SELECT id, fio, educational_institution, course, nomination, section, email, phone, work_file, is_published, created_at 
         FROM applications 
@@ -50,7 +45,6 @@ $published = $_GET['published'] ?? '';
 
 if ($published !== '') {
     try {
-        
         $stmt = $pdo->prepare("
             SELECT id, fio, educational_institution, course, nomination, section, email, phone, work_file, is_published, created_at 
             FROM applications 
