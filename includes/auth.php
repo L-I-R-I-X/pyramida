@@ -1,25 +1,31 @@
 <?php
-// Подключаем config.php и db.php для работы с БД и сессиями
-$configFile = __DIR__ . '/config.php';
-$dbFile = __DIR__ . '/db.php';
+// ============================================================================
+// АВТОРИЗАЦИЯ И ПРОВЕРКА ДОСТУПА
+// ============================================================================
 
-if (!file_exists($configFile)) {
-    die('Ошибка: Файл config.php не найден.');
+// Подключаем config.php и db.php если они ещё не подключены
+if (!isset($pdo)) {
+    $configFile = __DIR__ . '/config.php';
+    $dbFile = __DIR__ . '/db.php';
+    
+    if (!file_exists($configFile)) {
+        die('Ошибка: Файл config.php не найден.');
+    }
+    require_once $configFile;
+    
+    if (!file_exists($dbFile)) {
+        die('Ошибка: Файл db.php не найден. Запустите install.php для настройки базы данных.');
+    }
+    require_once $dbFile;
 }
-require_once $configFile;
 
-if (!file_exists($dbFile)) {
-    die('Ошибка: Файл db.php не найден. Запустите install.php для настройки базы данных.');
-}
-require_once $dbFile;
-
-// Запускаем сессию сразу после подключения к БД
+// Запускаем сессию только если она ещё не запущена
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
 function requireAuth() {
-    // Сессия уже запущена в этом файле
+    // Сессия уже должна быть запущена
     if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
         $loginUrl = BASE_URL . 'admin/login.php';
         if (!headers_sent()) {
@@ -36,13 +42,14 @@ function getAdminLogin() {
     return $_SESSION['admin_login'] ?? 'admin';
 }
 
+/**
+ * Функция входа в систему
+ * @param string $login Логин
+ * @param string $password Пароль
+ * @return array ['success' => bool, 'blocked' => bool, ...]
+ */
 function login($login, $password) {
     global $pdo;
-    
-    // Сессия уже должна быть запущена в auth.php
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
     
     // Проверка количества неудачных попыток входа для этого IP
     $maxAttempts = 5;
