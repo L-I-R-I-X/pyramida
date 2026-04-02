@@ -1,16 +1,20 @@
 <?php
 require_once 'config.php';
 
-if (!function_exists('getSetting')) {
-    require_once __DIR__ . '/db.php';
-    require_once __DIR__ . '/functions.php';
-}
-
-$showParticipants = getSetting('show_participants_table', '0');
-$showWinners = getSetting('show_winners_table', '0');
-$showGallery = getSetting('show_gallery', '1');
-
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
+
+// Проверяем, существует ли файл functions.php и pdo подключен
+if (file_exists(__DIR__ . '/functions.php') && isset($pdo)) {
+    require_once __DIR__ . '/functions.php';
+    $showParticipants = getSetting('show_participants_table', '0');
+    $showWinners = getSetting('show_winners_table', '0');
+    $showGallery = getSetting('show_gallery', '1');
+} else {
+    // Если БД не подключена, используем значения по умолчанию
+    $showParticipants = '0';
+    $showWinners = '0';
+    $showGallery = '1';
+}
 ?>
 <header class="site-header">
     <div class="container header-content">
