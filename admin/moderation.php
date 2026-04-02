@@ -1,18 +1,12 @@
 <?php
 $configFile = __DIR__ . '/../includes/config.php';
 if (!file_exists($configFile)) {
-    die('Ошибка: Файл config.php не найден. Переименуйте config.example.php в config.php и настройте параметры подключения.');
+    die('Ошибка: Файл config.php не найден.');
 }
 require_once '../includes/config.php';
 require_once '../includes/db.php';
-require_once '../includes/auth.php';
 require_once '../includes/csrf.php';
 require_once '../includes/functions.php';
-
-// Явно инициализируем сессию
-initSession($pdo);
-
-requireAuth();
 
 $message = '';
 $messageType = '';
@@ -25,7 +19,6 @@ if (isset($_GET['success'])) {
 $applicationId = $_GET['id'] ?? 0;
 
 try {
-    
     $stmt = $pdo->prepare("
         SELECT id, fio, educational_institution, course, nomination, section, email, phone, work_file, work_title, is_published, jury_score, created_at 
         FROM applications 
@@ -43,15 +36,12 @@ if (!$application) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // CSRF validation
     if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
         $message = 'Ошибка безопасности: недействительный токен';
         $messageType = 'error';
     } else {
-        // Обработка удаления работы
         if (isset($_POST['delete_work'])) {
             try {
-                // Удаляем файлы
                 $galleryPath = UPLOAD_DIR_GALLERY . $application['work_file'];
                 $originalPath = UPLOAD_DIR_ORIGINALS . $application['work_file'];
                 
@@ -62,7 +52,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     unlink($originalPath);
                 }
                 
-                // Удаляем запись из БД
                 $stmt = $pdo->prepare("DELETE FROM applications WHERE id = :id");
                 $stmt->execute(['id' => $applicationId]);
                 
@@ -73,7 +62,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $messageType = 'error';
             }
         } else {
-            // Обработка обновления оценки и статуса публикации
             $publish = isset($_POST['is_published']) && $_POST['is_published'] === '1' ? 1 : 0;
             $score = isset($_POST['jury_score']) && $_POST['jury_score'] !== '' ? (int)$_POST['jury_score'] : null;
             
@@ -151,10 +139,8 @@ $originalPath = UPLOAD_DIR_ORIGINALS . $application['work_file'];
                         <span class="info-value"><?php echo htmlspecialchars($application['fio']); ?></span>
                     </div>
                     
-                    <!-- ✅ Изменено: ВУЗ → Учебное заведение -->
                     <div class="info-row">
                         <span class="info-label">Учебное заведение:</span>
-                        <!-- ✅ Изменено: vuz → educational_institution -->
                         <span class="info-value"><?php echo htmlspecialchars($application['educational_institution']); ?></span>
                     </div>
                     
@@ -179,11 +165,6 @@ $originalPath = UPLOAD_DIR_ORIGINALS . $application['work_file'];
                     </div>
 
                     <div class="info-row">
-                        <span class="info-label">Имя файла:</span>
-                        <span class="info-value"><code style="font-size: 0.85rem;"><?php echo htmlspecialchars($application['work_file']); ?></code></span>
-                    </div>
-                    
-                    <div class="info-row">
                         <span class="info-label">Email:</span>
                         <span class="info-value"><?php echo htmlspecialchars($application['email']); ?></span>
                     </div>
@@ -198,93 +179,36 @@ $originalPath = UPLOAD_DIR_ORIGINALS . $application['work_file'];
                         <span class="info-value"><?php echo date('d.m.Y H:i', strtotime($application['created_at'])); ?></span>
                     </div>
                     
-                    <div class="info-row">
-                        <span class="info-label">Статус:</span>
-                        <span class="info-value">
-                            <?php if ($application['is_published']): ?>
-                                <span class="status-indicator status-published">Опубликовано в галерее</span>
-                            <?php else: ?>
-                                <span class="status-indicator status-draft">Не опубликовано</span>
-                            <?php endif; ?>
-                        </span>
-                    </div>
-                    
-                    <form method="POST" class="moderation-form" onsubmit="return confirmDelete(this);">
+                    <form method="POST" class="moderation-form">
                         <h3>Действия модератора</h3>
-                        <p style="color: #888888; margin-bottom: 20px;">
-                            Отметьте работу для публикации в галерее на сайте. Оценка жюри может быть выставлена отдельно.
-                        </p>
                         
                         <div class="moderation-score">
                             <h3>Оценка жюри</h3>
-                            <p style="color: #888888; margin-bottom: 15px;">
-                                Укажите балл от 0 до 10 (необязательно)
-                            </p>
-                            
                             <div class="score-input-group">
-                                <input type="number" 
-                                       id="jury_score" 
-                                       name="jury_score" 
-                                       min="0" 
-                                       max="10" 
-                                       value="<?php echo $application['jury_score'] !== null ? htmlspecialchars($application['jury_score']) : ''; ?>"
-                                       placeholder="0-10">
+                                <input type="number" id="jury_score" name="jury_score" min="0" max="10" 
+                                       value="<?php echo $application['jury_score'] !== null ? htmlspecialchars($application['jury_score']) : ''; ?>" placeholder="0-10">
                                 <span class="score-hint">баллов</span>
                             </div>
-                            
-                            <?php if ($application['jury_score'] !== null): ?>
-                                <p style="margin-top: 10px; font-size: 0.9rem; color: #FF6B00;">
-                                    Текущая оценка: <strong><?php echo htmlspecialchars($application['jury_score']); ?>/10</strong>
-                                </p>
-                            <?php endif; ?>
                         </div>
                         
                         <div class="moderation-toggle">
                             <h3>Публикация в галерее</h3>
-                            <p style="color: #888888; margin-bottom: 15px;">
-                                Включите, чтобы работа отображалась в галерее на сайте
-                            </p>
-                            
                             <label class="toggle-switch">
-                                <input type="checkbox" 
-                                       name="is_published" 
-                                       value="1" 
-                                       <?php echo $application['is_published'] ? 'checked' : ''; ?>>
+                                <input type="checkbox" name="is_published" value="1" <?php echo $application['is_published'] ? 'checked' : ''; ?>>
                                 <span class="toggle-slider"></span>
                             </label>
-                            <span class="toggle-label" style="margin-left: 15px; font-weight: 500; color: #1A1A1A;">
+                            <span class="toggle-label" style="margin-left: 15px; font-weight: 500;">
                                 <?php echo $application['is_published'] ? 'Опубликовано' : 'Не опубликовано'; ?>
                             </span>
                         </div>
                         
                         <div class="moderation-actions">
                             <button type="submit" name="save_changes" class="btn-save">Принять изменения</button>
-                            <button type="submit" name="delete_work" class="btn-delete" onclick="return confirm('Вы уверены, что хотите удалить эту работу? Это действие нельзя отменить.');">Удалить работу</button>
+                            <button type="submit" name="delete_work" class="btn-delete" onclick="return confirm('Вы уверены, что хотите удалить эту работу?');">Удалить работу</button>
                         </div>
                         
                         <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
                     </form>
-                    
-                    <script>
-                    function confirmDelete(form) {
-                        if (form.querySelector('[name="delete_work"]') && form.querySelector('[name="delete_work"]').clicked) {
-                            return confirm('Вы уверены, что хотите удалить эту работу? Это действие нельзя отменить.');
-                        }
-                        return true;
-                    }
-                    
-                    // Обновление текста статуса при переключении слайдера
-                    document.addEventListener('DOMContentLoaded', function() {
-                        var toggle = document.querySelector('input[name="is_published"]');
-                        var label = document.querySelector('.toggle-label');
-                        
-                        if (toggle && label) {
-                            toggle.addEventListener('change', function() {
-                                label.textContent = this.checked ? 'Опубликовано' : 'Не опубликовано';
-                            });
-                        }
-                    });
-                    </script>
                 </div>
             </div>
         </main>
