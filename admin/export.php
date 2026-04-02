@@ -6,6 +6,14 @@ if (!file_exists($configFile)) {
 require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/functions.php';
+require_once '../includes/auth.php';
+
+// Проверяем авторизацию
+$currentUser = checkAuth();
+if (!$currentUser) {
+    header('Location: login.php');
+    exit;
+}
 
 function exportParticipants($pdo) {
     header('Content-Type: text/csv; charset=utf-8');
