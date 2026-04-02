@@ -13,12 +13,33 @@ echo "=== ДИАГНОСТИКА АВТОРИЗАЦИИ ===\n\n";
 
 // Шаг 0: Проверка конфигурации
 echo "[ШАГ 0] Проверка конфигурации...\n";
-if (!file_exists(__DIR__ . '/../config.php')) {
-    die("❌ ОШИБКА: config.php не найден!\n");
+echo "   Текущий скрипт: " . __FILE__ . "\n";
+echo "   Директория скрипта: " . __DIR__ . "\n";
+
+$configPath = __DIR__ . '/../config.php';
+echo "   Путь к config.php: $configPath\n";
+echo "   realpath: " . (realpath($configPath) ?: 'не найден') . "\n";
+
+if (!file_exists($configPath)) {
+    echo "❌ ОШИБКА: config.php не найден по пути: $configPath\n";
+    
+    // Попробуем найти config.php другими способами
+    echo "\n   Поиск альтернативных путей:\n";
+    $altPaths = [
+        dirname(__DIR__) . '/config.php',
+        $_SERVER['DOCUMENT_ROOT'] . '/config.php',
+        getcwd() . '/config.php',
+    ];
+    
+    foreach ($altPaths as $altPath) {
+        $exists = file_exists($altPath) ? '✅ НАЙДЕН' : '❌ не найден';
+        echo "   - $altPath: $exists\n";
+    }
+    exit;
 }
 echo "✅ config.php найден\n";
 
-require_once __DIR__ . '/../config.php';
+require_once $configPath;
 
 if (!defined('DB_HOST') || !defined('DB_NAME') || !defined('DB_USER')) {
     die("❌ ОШИБКА: Константы БД не определены в config.php!\n");
