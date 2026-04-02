@@ -202,8 +202,6 @@ $originalUrlPath = BASE_URL . 'uploads/originals/' . $application['work_file'];
                             <button type="submit" name="save_changes" class="btn-save">Принять изменения</button>
                             <button type="submit" name="delete_work" class="btn-delete" onclick="return confirm('Вы уверены, что хотите удалить эту работу?');">Удалить работу</button>
                         </div>
-                        
-                        <input type="hidden" name="csrf_token" value="">
                     </form>
                 </div>
             </div>

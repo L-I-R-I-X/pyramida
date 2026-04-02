@@ -8,15 +8,18 @@ $showParticipants = '1';
 $showWinners = '1';
 $showGallery = '1';
 
-// Проверяем, существует ли файл functions.php и pdo подключен
-if (file_exists(__DIR__ . '/functions.php') && isset($pdo)) {
+// Подключаем БД и функции только если они нужны для получения настроек
+if (file_exists(__DIR__ . '/db.php')) {
     try {
-        require_once __DIR__ . '/functions.php';
-        $showParticipants = getSetting('show_participants_table', '1');
-        $showWinners = getSetting('show_winners_table', '1');
-        $showGallery = getSetting('show_gallery', '1');
+        require_once __DIR__ . '/db.php';
+        if (file_exists(__DIR__ . '/functions.php') && isset($pdo)) {
+            require_once __DIR__ . '/functions.php';
+            $showParticipants = getSetting('show_participants_table', '1');
+            $showWinners = getSetting('show_winners_table', '1');
+            $showGallery = getSetting('show_gallery', '1');
+        }
     } catch (Exception $e) {
-        // Если ошибка при получении настроек, используем значения по умолчанию (всё показано)
+        // Если ошибка при подключении или получении настроек, используем значения по умолчанию (всё показано)
     }
 }
 ?>
