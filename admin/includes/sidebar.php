@@ -1,25 +1,18 @@
 <?php
 $configFile = __DIR__ . '/../../includes/config.php';
 if (!file_exists($configFile)) {
-    die('Ошибка: Файл config.php не найден. Переименуйте config.example.php в config.php и настройте параметры подключения.');
+    die('Ошибка: Файл config.php не найден.');
 }
 require_once __DIR__ . '/../../includes/config.php';
 require_once __DIR__ . '/../../includes/db.php';
-require_once __DIR__ . '/../../includes/auth.php';
-
-// Инициализируем сессию перед проверкой авторизации
-initSession($pdo);
-
-// Проверяем авторизацию для всех страниц админки
-requireAuth();
+require_once __DIR__ . '/../../includes/functions.php';
 ?>
 <aside class="admin-sidebar">
     <h2>🏛️ Пирамида</h2>
     
-    <!-- Выделенное имя админа -->
     <div class="admin-user-info">
         <span class="admin-user-icon">👤</span>
-        <span class="admin-user-name"><?php echo htmlspecialchars(getAdminLogin()); ?></span>
+        <span class="admin-user-name">Администратор</span>
     </div>
     
     <nav>
@@ -28,9 +21,6 @@ requireAuth();
         <a href="export.php" class="<?php echo basename($_SERVER['PHP_SELF']) === 'export.php' ? 'active' : ''; ?>">Экспорт данных</a>
         <a href="settings.php" class="<?php echo basename($_SERVER['PHP_SELF']) === 'settings.php' ? 'active' : ''; ?>">Настройки</a>
         
-        <!-- ✅ Исправлено: используем BASE_URL вместо хардкода -->
         <a href="<?php echo BASE_URL; ?>" target="_blank">На сайт</a>
-        
-        <a href="logout.php">Выход</a>
     </nav>
 </aside>
