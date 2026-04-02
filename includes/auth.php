@@ -46,10 +46,12 @@ function initAuthTables() {
                 session_token VARCHAR(64) UNIQUE NOT NULL,
                 ip_address VARCHAR(45),
                 user_agent VARCHAR(255),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                expires_at TIMESTAMP NOT NULL,
-                last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES admin_users(id) ON DELETE CASCADE
+                created_at DATETIME NOT NULL,
+                expires_at DATETIME NOT NULL,
+                last_activity DATETIME NOT NULL,
+                INDEX idx_session_token (session_token),
+                INDEX idx_user_id (user_id),
+                INDEX idx_expires_at (expires_at)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
         
@@ -166,11 +168,12 @@ function createSession($userId) {
         $sessionToken = generateSessionToken();
         $ipAddress = $_SERVER['REMOTE_ADDR'] ?? '';
         $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+        $now = date('Y-m-d H:i:s');
         $expiresAt = date('Y-m-d H:i:s', time() + SESSION_LIFETIME);
         
         $stmt = $pdo->prepare("
-            INSERT INTO admin_sessions (user_id, session_token, ip_address, user_agent, expires_at) 
-            VALUES (:user_id, :session_token, :ip_address, :user_agent, :expires_at)
+            INSERT INTO admin_sessions (user_id, session_token, ip_address, user_agent, created_at, expires_at, last_activity) 
+            VALUES (:user_id, :session_token, :ip_address, :user_agent, :created_at, :expires_at, :last_activity)
         ");
         
         $stmt->execute([
@@ -178,7 +181,9 @@ function createSession($userId) {
             'session_token' => $sessionToken,
             'ip_address' => $ipAddress,
             'user_agent' => $userAgent,
-            'expires_at' => $expiresAt
+            'created_at' => $now,
+            'expires_at' => $expiresAt,
+            'last_activity' => $now
         ]);
         
         // Устанавливаем cookie с токеном сессии
@@ -238,12 +243,14 @@ function checkAuth() {
         
         // Обновляем время последней активности и продлеваем сессию
         $newExpiresAt = date('Y-m-d H:i:s', time() + SESSION_LIFETIME);
+        $now = date('Y-m-d H:i:s');
         $stmt = $pdo->prepare("
             UPDATE admin_sessions 
-            SET last_activity = NOW(), expires_at = :expires_at 
+            SET last_activity = :last_activity, expires_at = :expires_at 
             WHERE session_token = :session_token
         ");
         $stmt->execute([
+            'last_activity' => $now,
             'expires_at' => $newExpiresAt,
             'session_token' => $sessionToken
         ]);

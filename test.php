@@ -289,7 +289,7 @@ ob_end_flush();
             }
         } else {
             addLog('error', 'КРИТИЧЕСКАЯ ОШИБКА: Таблица admin_sessions не существует!');
-            addLog('info', 'Попытка создать таблицу admin_sessions вручную...', []);
+            addLog('info', 'Попытка создать таблицу admin_sessions вручную (используем DATETIME вместо TIMESTAMP)...', []);
             try {
                 $pdo->exec("
                     CREATE TABLE IF NOT EXISTS admin_sessions (
@@ -298,10 +298,12 @@ ob_end_flush();
                         session_token VARCHAR(64) UNIQUE NOT NULL,
                         ip_address VARCHAR(45),
                         user_agent VARCHAR(255),
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        expires_at TIMESTAMP NOT NULL,
-                        last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY (user_id) REFERENCES admin_users(id) ON DELETE CASCADE
+                        created_at DATETIME NOT NULL,
+                        expires_at DATETIME NOT NULL,
+                        last_activity DATETIME NOT NULL,
+                        INDEX idx_session_token (session_token),
+                        INDEX idx_user_id (user_id),
+                        INDEX idx_expires_at (expires_at)
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
                 ");
                 
@@ -360,7 +362,7 @@ ob_end_flush();
                 
                 if (!$tableExistsBeforeAuth) {
                     addLog('error', 'Таблица admin_sessions НЕ существует перед созданием сессии!');
-                    addLog('info', 'Создаём таблицу принудительно...');
+                    addLog('info', 'Создаём таблицу принудительно (DATETIME)...');
                     try {
                         $pdo->exec("
                             CREATE TABLE IF NOT EXISTS admin_sessions (
@@ -369,10 +371,12 @@ ob_end_flush();
                                 session_token VARCHAR(64) UNIQUE NOT NULL,
                                 ip_address VARCHAR(45),
                                 user_agent VARCHAR(255),
-                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                                expires_at TIMESTAMP NOT NULL,
-                                last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                                FOREIGN KEY (user_id) REFERENCES admin_users(id) ON DELETE CASCADE
+                                created_at DATETIME NOT NULL,
+                                expires_at DATETIME NOT NULL,
+                                last_activity DATETIME NOT NULL,
+                                INDEX idx_session_token (session_token),
+                                INDEX idx_user_id (user_id),
+                                INDEX idx_expires_at (expires_at)
                             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
                         ");
                         
