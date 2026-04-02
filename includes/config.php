@@ -1,5 +1,49 @@
 <?php
 
+// ============================================================================
+// КОНФИГУРАЦИЯ ПУТЕЙ (можно изменять для разных окружений)
+// ============================================================================
+
+// Базовый путь проекта (корень сайта)
+$basePath = __DIR__ . '/..';
+
+// Пути для загрузки файлов (должны быть доступны на запись www-data)
+if (!defined('UPLOAD_DIR_ORIGINALS')) {
+    define('UPLOAD_DIR_ORIGINALS', $basePath . '/uploads/originals/');
+}
+if (!defined('UPLOAD_DIR_GALLERY')) {
+    define('UPLOAD_DIR_GALLERY', $basePath . '/uploads/gallery/');
+}
+
+// Пути для кэша и временных файлов
+if (!defined('CACHE_DIR')) {
+    define('CACHE_DIR', $basePath . '/cache/');
+}
+if (!defined('CACHE_SESSIONS_DIR')) {
+    define('CACHE_SESSIONS_DIR', CACHE_DIR . 'sessions/');
+}
+if (!defined('CACHE_FONTS_DIR')) {
+    define('CACHE_FONTS_DIR', CACHE_DIR . 'fonts/');
+}
+if (!defined('CACHE_TEMP_DIR')) {
+    define('CACHE_TEMP_DIR', CACHE_DIR . 'temp/');
+}
+if (!defined('CACHE_CERTIFICATES_DIR')) {
+    define('CACHE_CERTIFICATES_DIR', CACHE_DIR . 'certificates/');
+}
+
+// Путь для логов
+if (!defined('LOGS_DIR')) {
+    define('LOGS_DIR', $basePath . '/logs/');
+}
+if (!defined('ERROR_LOG_FILE')) {
+    define('ERROR_LOG_FILE', LOGS_DIR . 'php_errors.log');
+}
+
+// ============================================================================
+// НАСТРОЙКИ ПРИЛОЖЕНИЯ
+// ============================================================================
+
 if (!defined('BASE_URL')) {
     define('BASE_URL', 'http://localhost/pyramida/');
 }
@@ -21,27 +65,41 @@ if (!defined('ALLOWED_MIME_TYPES')) {
     define('ALLOWED_MIME_TYPES', ['image/jpeg']);
 }
 
-$basePath = __DIR__ . '/..';
-if (!defined('UPLOAD_DIR_ORIGINALS')) {
-    define('UPLOAD_DIR_ORIGINALS', $basePath . '/uploads/originals/');
-}
-if (!defined('UPLOAD_DIR_GALLERY')) {
-    define('UPLOAD_DIR_GALLERY', $basePath . '/uploads/gallery/');
-}
+// ============================================================================
+// НАСТРОЙКИ PHP И ЛОГИРОВАНИЕ
+// ============================================================================
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 ini_set('log_errors', 1);
-ini_set('error_log', $basePath . '/logs/php_errors.log');
+ini_set('error_log', ERROR_LOG_FILE);
 
 // Настройки загрузки файлов (должны быть также в php.ini сервера)
 ini_set('upload_max_filesize', '10M');
 ini_set('post_max_size', '12M');
 ini_set('max_file_uploads', 5);
 
-if (!is_dir($basePath . '/logs')) {
-    mkdir($basePath . '/logs', 0755, true);
+// Создаем необходимые директории при инициализации
+$requiredDirs = [
+    LOGS_DIR,
+    UPLOAD_DIR_ORIGINALS,
+    UPLOAD_DIR_GALLERY,
+    CACHE_DIR,
+    CACHE_SESSIONS_DIR,
+    CACHE_FONTS_DIR,
+    CACHE_TEMP_DIR,
+    CACHE_CERTIFICATES_DIR,
+];
+
+foreach ($requiredDirs as $dir) {
+    if (!is_dir($dir)) {
+        mkdir($dir, 0755, true);
+    }
 }
+
+// ============================================================================
+// НАСТРОЙКИ СЕССИЙ
+// ============================================================================
 
 // Настройка сессий для хранения в БД
 // Будет активировано после подключения к БД в db.php

@@ -183,7 +183,7 @@ function exportWorks($pdo, $type = 'all') {
     $rank = 1;
     
     foreach ($applications as $app) {
-        $originalPath = __DIR__ . '/../uploads/originals/' . $app['work_file'];
+        $originalPath = UPLOAD_DIR_ORIGINALS . $app['work_file'];
         
         if (file_exists($originalPath)) {
             $nomination = $nominationNames[$app['nomination']] ?? $app['nomination'];

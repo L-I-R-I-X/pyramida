@@ -6,8 +6,8 @@ use Dompdf\Options;
 
 function generateCertificate($participantData, $type = 'certificate') {
     
-    $cacheFontsDir = __DIR__ . '/../cache/fonts';
-    $cacheTempDir = __DIR__ . '/../cache/temp';
+    $cacheFontsDir = CACHE_FONTS_DIR;
+    $cacheTempDir = CACHE_TEMP_DIR;
     
     if (!is_dir($cacheFontsDir)) {
         mkdir($cacheFontsDir, 0755, true);
