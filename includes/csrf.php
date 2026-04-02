@@ -7,6 +7,11 @@
  * Generate CSRF token and store it in session
  */
 function generateCsrfToken() {
+    // Убеждаемся, что сессия запущена
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    
     if (empty($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     }
@@ -17,6 +22,10 @@ function generateCsrfToken() {
  * Get current CSRF token (without regenerating)
  */
 function getCsrfToken() {
+    // Убеждаемся, что сессия запущена
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
     return $_SESSION['csrf_token'] ?? '';
 }
 
@@ -26,6 +35,11 @@ function getCsrfToken() {
  * @return bool True if valid
  */
 function validateCsrfToken($token = null) {
+    // Убеждаемся, что сессия запущена
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    
     if (!isset($_SESSION['csrf_token'])) {
         return false;
     }
