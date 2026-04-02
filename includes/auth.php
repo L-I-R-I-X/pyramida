@@ -3,6 +3,11 @@
 // АВТОРИЗАЦИЯ И ПРОВЕРКА ДОСТУПА
 // ============================================================================
 
+// Запускаем сессию ПЕРЕД подключением любых других файлов
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 // Подключаем config.php и db.php если они ещё не подключены
 if (!isset($pdo)) {
     $configFile = __DIR__ . '/config.php';
@@ -17,11 +22,6 @@ if (!isset($pdo)) {
         die('Ошибка: Файл db.php не найден. Запустите install.php для настройки базы данных.');
     }
     require_once $dbFile;
-}
-
-// Запускаем сессию только если она ещё не запущена
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
 }
 
 function requireAuth() {
