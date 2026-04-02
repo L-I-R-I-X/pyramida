@@ -1,1 +1,46 @@
-Nothing needs to be added to .gitignore since the changes only include source files (.php, .md) without any build artifacts, dependencies, or temporary files that should be ignored.
+```
+# Logs
+logs/
+*.log
+
+# Cache
+cache/
+
+# Uploads
+uploads/
+
+# Environment
+.env
+.env.local
+.env.*
+
+# Dependencies
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.egg-info/
+dist/
+build/
+target/
+.gradle/
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# System
+.DS_Store
+Thumbs.db
+
+# Other
+*.tmp
+*.temp
+coverage/
+htmlcov/
+.coverage
+.mypy_cache/
+.pytest_cache/
+```

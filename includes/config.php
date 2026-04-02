@@ -45,11 +45,15 @@ if (!defined('ERROR_LOG_FILE')) {
 // ============================================================================
 
 if (!defined('BASE_URL')) {
-    define('BASE_URL', 'http://localhost/pyramida/');
+    // Автоопределение BASE_URL если не задано
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $basePathUrl = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
+    define('BASE_URL', getenv('BASE_URL') ?: ($protocol . '://' . $host . $basePathUrl . '/'));
 }
 
 if (!defined('SITE_URL')) {
-    define('SITE_URL', 'http://localhost/pyramida/');
+    define('SITE_URL', getenv('SITE_URL') ?: BASE_URL);
 }
 
 if (!defined('UPLOAD_MAX_SIZE')) {
@@ -69,8 +73,16 @@ if (!defined('ALLOWED_MIME_TYPES')) {
 // НАСТРОЙКИ PHP И ЛОГИРОВАНИЕ
 // ============================================================================
 
+// Окружение: 'local' или 'production' (можно переопределить через getenv)
+if (!defined('APP_ENV')) {
+    define('APP_ENV', getenv('APP_ENV') ?: 'production');
+}
+
+// Режим отладки: включён только в local окружении
+$debugMode = APP_ENV === 'local';
+
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors', $debugMode ? 1 : 0);
 ini_set('log_errors', 1);
 ini_set('error_log', ERROR_LOG_FILE);
 
