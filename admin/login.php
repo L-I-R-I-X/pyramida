@@ -3,16 +3,14 @@
 // ВХОД В АДМИН-ПАНЕЛЬ
 // ============================================================================
 
-// Подключаем зависимости
+// Подключаем зависимости в правильном порядке
 require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
 require_once '../includes/csrf.php';
 
-// Сессия уже запущена в auth.php, проверяем
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+// Явно инициализируем сессию через initSession() из auth.php
+initSession();
 
 // Если уже авторизован - редирект на страницу заявок
 if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {

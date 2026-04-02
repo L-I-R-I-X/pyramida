@@ -9,6 +9,9 @@ require_once '../includes/auth.php';
 require_once '../includes/csrf.php';
 require_once '../includes/functions.php';
 
+// Явно инициализируем сессию
+initSession();
+
 requireAuth();
 
 $message = '';
