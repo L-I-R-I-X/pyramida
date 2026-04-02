@@ -1,10 +1,16 @@
 <?php
+// Сначала подключаем auth.php (он подключит config.php и db.php если нужно)
 require_once '../includes/auth.php';
 require_once '../includes/functions.php';
 require_once '../includes/csrf.php';
 
-// Генерируем CSRF токен при загрузке страницы
-generateCsrfToken();
+// Запускаем сессию явно после подключения всех зависимостей
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Генерируем CSRF токен при загрузке страницы (токен сохраняется в сессии)
+$csrfToken = generateCsrfToken();
 
 if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
     header('Location: applications.php');
@@ -16,9 +22,11 @@ $remainingAttempts = null;
 $waitTime = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // CSRF validation
+    // CSRF validation - проверяем токен из POST данных
     if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
         $error = 'Ошибка безопасности: недействительный токен';
+        // Перегенерируем токен для следующей попытки
+        $csrfToken = generateCsrfToken();
     } else {
         $login = $_POST['login'] ?? '';
         $password = $_POST['password'] ?? '';
