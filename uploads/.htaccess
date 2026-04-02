@@ -1,0 +1,12 @@
+# Запрет выполнения PHP в директории загрузок
+<FilesMatch "\.(php|phtml|php3|php4|php5|php7|php8|pht|phar)$">
+    Deny from all
+</FilesMatch>
+
+# Отключить выполнение CGI
+<IfModule mod_cgi.c>
+    Options -ExecCGI
+</IfModule>
+
+# Скрыть листинг директорий
+Options -Indexes

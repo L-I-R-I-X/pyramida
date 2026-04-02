@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
     $host = $_POST['db_host'] ?? 'localhost';
     $dbname = $_POST['db_name'] ?? 'pyramida_1';
     $username = $_POST['db_username'] ?? 'pyramida_1';
-    $password = $_POST['db_password'] ?? '%t5+66qh}&RMMT&L';
+    $password = $_POST['db_password'] ?? '';  // Пустой пароль допустим
     
     $adminLogin = $_POST['admin_login'] ?? 'admin';
     $adminPassword = $_POST['admin_password'] ?? '';
@@ -321,8 +321,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
                 
                 <div class="form-group">
                     <label for="db_password">Пароль БД:</label>
-                    <input type="password" id="db_password" name="db_password" value="" placeholder="Введите пароль БД или оставьте по умолчанию" required>
-                    <small style="color: #666;">Пароль по умолчанию уже установлен. Измените, если требуется.</small>
+                    <input type="password" id="db_password" name="db_password" value="" placeholder="Введите пароль БД (оставьте пустым, если пароль не требуется)">
+                    <small style="color: #666;">Оставьте пустым, если база данных не требует пароля</small>
                 </div>
                 
                 <h2>👤 Учётная запись администратора</h2>
