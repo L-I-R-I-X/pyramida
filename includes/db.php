@@ -31,17 +31,20 @@ try {
     require_once __DIR__ . '/DatabaseSessionHandler.php';
     $sessionHandler = new DatabaseSessionHandler($pdo);
 
-    // Регистрируем обработчик, но НЕ запускаем сессию автоматически
-    // Сессия будет запущена при первом обращении к $_SESSION в auth.php или других файлах
+    // Регистрируем обработчик сессий ТОЛЬКО если сессия ещё не запущена
     if (session_status() === PHP_SESSION_NONE) {
+        // Важно: true означает, что register_shutdown_function() будет вызван
+        // Это необходимо для корректной записи данных сессии при завершении скрипта
         session_set_save_handler($sessionHandler, true);
         
-        // Настраиваем параметры сессии
-        ini_set('session.use_strict_mode', 1);
-        ini_set('session.use_only_cookies', 1);
-        ini_set('session.cookie_httponly', 1);
-        ini_set('session.cookie_samesite', 'Strict');
+        // Обновляем флаг инициализации
+        if (!defined('SESSION_INITIALIZED')) {
+            define('SESSION_INITIALIZED', true);
+        }
     }
+    
+    // Сохраняем $sessionHandler в глобальной области, чтобы он не был уничтожен сборщиком мусора
+    $GLOBALS['sessionHandler'] = $sessionHandler;
     
 } catch (PDOException $e) {
     error_log('Database connection failed: ' . $e->getMessage());

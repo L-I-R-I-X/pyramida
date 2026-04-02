@@ -3,29 +3,57 @@
 // АВТОРИЗАЦИЯ И ПРОВЕРКА ДОСТУПА
 // ============================================================================
 
-// Запускаем сессию ПЕРЕД подключением любых других файлов
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+/**
+ * Инициализация сессии с использованием DatabaseSessionHandler
+ * Вызывается один раз при первом обращении к функциям авторизации
+ */
+function initSession() {
+    global $pdo;
+    
+    // Если сессия уже запущена - ничего не делаем
+    if (session_status() !== PHP_SESSION_NONE) {
+        return true;
+    }
+    
+    // Проверяем, что PDO подключен
+    if (!isset($pdo)) {
+        // Подключаем config и db если они ещё не подключены
+        $configFile = __DIR__ . '/config.php';
+        $dbFile = __DIR__ . '/db.php';
+        
+        if (file_exists($configFile)) {
+            require_once $configFile;
+        } else {
+            die('Ошибка: Файл config.php не найден.');
+        }
+        
+        if (file_exists($dbFile)) {
+            require_once $dbFile;
+        } else {
+            die('Ошибка: Файл db.php не найден. Запустите install.php для настройки базы данных.');
+        }
+    }
+    
+    // Запускаем сессию (обработчик уже установлен в db.php)
+    $result = @session_start();
+    
+    if ($result === false) {
+        error_log('Failed to start session. Session status: ' . session_status());
+        return false;
+    }
+    
+    return true;
 }
 
-// Подключаем config.php и db.php если они ещё не подключены
-if (!isset($pdo)) {
-    $configFile = __DIR__ . '/config.php';
-    $dbFile = __DIR__ . '/db.php';
-    
-    if (!file_exists($configFile)) {
-        die('Ошибка: Файл config.php не найден.');
-    }
-    require_once $configFile;
-    
-    if (!file_exists($dbFile)) {
-        die('Ошибка: Файл db.php не найден. Запустите install.php для настройки базы данных.');
-    }
-    require_once $dbFile;
-}
+// НЕ инициализируем сессию автоматически при подключении файла
+// Сессия будет инициализирована при явном вызове initSession() или при первом обращении к $_SESSION
 
 function requireAuth() {
-    // Сессия уже должна быть запущена
+    // Инициализируем сессию если ещё не запущена
+    if (session_status() === PHP_SESSION_NONE) {
+        initSession();
+    }
+    
     if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
         $loginUrl = BASE_URL . 'admin/login.php';
         if (!headers_sent()) {
@@ -39,6 +67,10 @@ function requireAuth() {
 }
 
 function getAdminLogin() {
+    // Инициализируем сессию если ещё не запущена
+    if (session_status() === PHP_SESSION_NONE) {
+        initSession();
+    }
     return $_SESSION['admin_login'] ?? 'admin';
 }
 
@@ -50,6 +82,11 @@ function getAdminLogin() {
  */
 function login($login, $password) {
     global $pdo;
+    
+    // Убеждаемся, что сессия запущена
+    if (session_status() === PHP_SESSION_NONE) {
+        initSession();
+    }
     
     // Проверка количества неудачных попыток входа для этого IP
     $maxAttempts = 5;
@@ -103,8 +140,9 @@ function login($login, $password) {
 }
 
 function logout() {
+    // Сессия должна быть уже запущена
     if (session_status() === PHP_SESSION_NONE) {
-        session_start();
+        initSession();
     }
 
     // Полная очистка всех переменных сессии
