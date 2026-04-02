@@ -1,6 +1,7 @@
 ```
-# PHP specific
-*.php~
+# Compiled and build artifacts
+*.pyc
+__pycache__/
 
 # Logs and temp files
 *.log
@@ -10,15 +11,21 @@
 # Environment
 .env
 .env.local
-.env.*
+*.env.*
 
 # Editors
 .vscode/
 .idea/
-*.swp
-*.swo
 
-# OS generated files
-.DS_Store
-Thumbs.db
+# Dependencies
+.venv/
+venv/
+node_modules/
+
+# Coverage and testing
+.coverage
+coverage/
+htmlcov/
+.pytest_cache/
+.mypy_cache/
 ```
