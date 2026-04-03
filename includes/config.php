@@ -36,19 +36,4 @@ ini_set('upload_max_filesize', '10M');
 ini_set('post_max_size', '12M');
 ini_set('max_file_uploads', 5);
 
-// Создаем необходимые директории
-$requiredDirs = [
-    LOGS_DIR,
-    UPLOAD_DIR_ORIGINALS,
-    UPLOAD_DIR_GALLERY,
-    CACHE_DIR,
-    CACHE_CERTIFICATES_DIR,
-];
-
-foreach ($requiredDirs as $dir) {
-    if (!is_dir($dir)) {
-        mkdir($dir, 0755, true);
-    }
-}
-
 ?>
