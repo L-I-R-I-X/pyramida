@@ -1,13 +1,14 @@
 <?php
 require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/functions.php';
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
 function generateCertificate($participantData, $type = 'certificate') {
     
-    $cacheFontsDir = CACHE_FONTS_DIR;
-    $cacheTempDir = CACHE_TEMP_DIR;
+    $cacheFontsDir = CACHE_DIR . 'fonts/';
+    $cacheTempDir = CACHE_DIR . 'temp/';
     
     if (!is_dir($cacheFontsDir)) {
         mkdir($cacheFontsDir, 0755, true);
@@ -125,18 +126,7 @@ HTML;
     return $dompdf->output();
 }
 
-function getPlaceText($place) {
-    $places = [
-        1 => 'I (первое)',
-        2 => 'II (второе)',
-        3 => 'III (третье)'
-    ];
-    
-    return $places[$place] ?? $place . '-е';
-}
-
 function downloadCertificate($pdo, $applicationId, $type = 'certificate') {
-    require_once __DIR__ . '/functions.php';
     
     if ($type === 'certificate') {
         $showCertificates = getSetting('show_certificates', '0');
