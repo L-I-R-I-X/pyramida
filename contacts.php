@@ -1,29 +1,4 @@
 <?php
-$successMessage = '';
-$errorMessage = '';
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = trim($_POST['name'] ?? '');
-    $email = filter_var($_POST['email'] ?? '', FILTER_SANITIZE_EMAIL);
-    $message = trim($_POST['message'] ?? '');
-    
-    if (empty($name) || empty($email) || empty($message)) {
-        $errorMessage = 'Заполните все обязательные поля';
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errorMessage = 'Укажите корректный email';
-    } else {
-        $to = 'shipilina.ev@sibadi.org';
-        $subject = 'Сообщение с сайта конкурса «Пирамида»';
-        $body = "Имя: $name\nEmail: $email\n\nСообщение:\n$message";
-        $headers = "From: no-reply@vuz.ru\r\nReply-To: $email\r\n";
-        
-        if (@mail($to, $subject, $body, $headers)) {
-            $successMessage = 'Сообщение отправлено! Мы свяжемся с вами в ближайшее время.';
-        } else {
-            $errorMessage = 'Ошибка отправки. Попробуйте связаться по телефону.';
-        }
-    }
-}
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -81,37 +56,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <h3>Время работы</h3>
                             <p>Пн–Пт: 9:00 – 17:00 (по местному времени)</p>
                         </div>
-                    </div>
-                    
-                    <div class="contacts-form-container">
-                        <h2>Написать сообщение</h2>
-                        
-                        <?php if ($successMessage): ?>
-                            <div class="alert alert-success"><?php echo htmlspecialchars($successMessage); ?></div>
-                        <?php endif; ?>
-                        
-                        <?php if ($errorMessage): ?>
-                            <div class="alert alert-error"><?php echo htmlspecialchars($errorMessage); ?></div>
-                        <?php endif; ?>
-                        
-                        <form method="POST" class="contact-form">
-                            <div class="form-group">
-                                <label for="name">Ваше имя *</label>
-                                <input type="text" id="name" name="name" required value="<?php echo htmlspecialchars($_POST['name'] ?? ''); ?>">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="email">Email *</label>
-                                <input type="email" id="email" name="email" required value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="message">Сообщение *</label>
-                                <textarea id="message" name="message" rows="5" required><?php echo htmlspecialchars($_POST['message'] ?? ''); ?></textarea>
-                            </div>
-                            
-                            <button type="submit" class="btn btn-large">Отправить</button>
-                        </form>
                     </div>
                 </div>
             </div>
