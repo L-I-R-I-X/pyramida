@@ -73,20 +73,15 @@ ob_start();
         }
 
         .header {
-            background-color: #1A1A1A;
+            background-image: url('<?= $basePath ?>/assets/img/hero-bg.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
             color: #FFFFFF;
             padding: 8mm 15mm 6mm 15mm;
             position: relative;
         }
         
-        .logo {
-            position: absolute;
-            top: 10mm;
-            left: 17mm;
-            width: 30mm;
-            height: auto;
-        }
-
         .header-text {
             text-align: center;
             font-size: 9pt;
@@ -94,6 +89,15 @@ ob_start();
             margin-left: 45mm; 
             margin-right: 15mm;
             margin-top: 1mm;
+            color: #FFFFFF;
+        }
+
+        .logo {
+            position: absolute;
+            top: 10mm;
+            left: 17mm;
+            width: 30mm;
+            height: auto;
         }
 
         .title {
