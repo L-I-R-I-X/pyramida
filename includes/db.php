@@ -118,6 +118,105 @@ function ensureSettingsTableExists() {
     }
 }
 
+/**
+ * Создаёт таблицу applications для хранения заявок участников
+ */
+function ensureApplicationsTableExists() {
+    global $pdo;
+    
+    try {
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS applications (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                fio VARCHAR(255) NOT NULL,
+                educational_institution VARCHAR(255) NOT NULL,
+                course VARCHAR(10) NOT NULL,
+                nomination VARCHAR(50) NOT NULL,
+                section VARCHAR(100) NOT NULL,
+                work_title VARCHAR(255) NOT NULL,
+                email VARCHAR(255) NOT NULL,
+                phone VARCHAR(50),
+                work_file VARCHAR(255) NOT NULL,
+                is_published TINYINT(1) DEFAULT 0,
+                jury_score INT DEFAULT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_nomination (nomination),
+                INDEX idx_section (section),
+                INDEX idx_published (is_published),
+                INDEX idx_created_at (created_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+        
+        return true;
+    } catch (PDOException $e) {
+        error_log('Applications table creation failed: ' . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Создаёт таблицу admin_users для администраторов
+ */
+function ensureAdminUsersTableExists() {
+    global $pdo;
+    
+    try {
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS admin_users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                username VARCHAR(50) UNIQUE NOT NULL,
+                password_hash VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                last_login TIMESTAMP NULL,
+                INDEX idx_username (username)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+        
+        // Создаём администратора по умолчанию, если таблица пуста
+        $stmt = $pdo->query("SELECT COUNT(*) as count FROM admin_users");
+        $result = $stmt->fetch();
+        
+        if ($result['count'] == 0) {
+            $defaultPassword = password_hash('admin123', PASSWORD_DEFAULT);
+            $stmt = $pdo->prepare("INSERT INTO admin_users (username, password_hash) VALUES (:username, :password)");
+            $stmt->execute(['username' => 'admin', 'password' => $defaultPassword]);
+        }
+        
+        return true;
+    } catch (PDOException $e) {
+        error_log('Admin users table creation failed: ' . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Создаёт таблицу admin_sessions для сессий администраторов
+ */
+function ensureAdminSessionsTableExists() {
+    global $pdo;
+    
+    try {
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS admin_sessions (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                session_token VARCHAR(255) NOT NULL,
+                expires_at TIMESTAMP NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_session_token (session_token),
+                INDEX idx_user_id (user_id),
+                FOREIGN KEY (user_id) REFERENCES admin_users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+        
+        return true;
+    } catch (PDOException $e) {
+        error_log('Admin sessions table creation failed: ' . $e->getMessage());
+        return false;
+    }
+}
+
 // ============================================================================
 // ОСНОВНОЕ ПОДКЛЮЧЕНИЕ К БД
 // ============================================================================
@@ -142,6 +241,9 @@ try {
     
     // Создаём таблицу settings с начальными значениями
     ensureSettingsTableExists();
+    
+    // Создаём таблицу applications для заявок участников
+    ensureApplicationsTableExists();
     
 } catch (PDOException $e) {
     error_log('Database connection failed: ' . $e->getMessage());
