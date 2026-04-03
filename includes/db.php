@@ -74,6 +74,50 @@ function ensureDatabaseExists() {
     }
 }
 
+/**
+ * Создаёт таблицу settings и заполняет начальными значениями по умолчанию (0)
+ */
+function ensureSettingsTableExists() {
+    global $pdo;
+    
+    try {
+        // Создаём таблицу settings, если не существует
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS settings (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                setting_key VARCHAR(100) UNIQUE NOT NULL,
+                setting_value VARCHAR(255) DEFAULT '0',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_setting_key (setting_key)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+        
+        // Вставляем настройки по умолчанию со значением 0, если они ещё не существуют
+        $defaultSettings = [
+            'show_participants_table' => '0',
+            'show_winners_table' => '0',
+            'show_gallery' => '0',
+            'show_certificates' => '0',
+            'show_diplomas' => '0'
+        ];
+        
+        $stmt = $pdo->prepare("
+            INSERT IGNORE INTO settings (setting_key, setting_value) 
+            VALUES (:skey, :svalue)
+        ");
+        
+        foreach ($defaultSettings as $key => $value) {
+            $stmt->execute(['skey' => $key, 'svalue' => $value]);
+        }
+        
+        return true;
+    } catch (PDOException $e) {
+        error_log('Settings table creation failed: ' . $e->getMessage());
+        return false;
+    }
+}
+
 // ============================================================================
 // ОСНОВНОЕ ПОДКЛЮЧЕНИЕ К БД
 // ============================================================================
@@ -95,6 +139,9 @@ $options = [
 
 try {
     $pdo = new PDO($dsn, $username, $password, $options);
+    
+    // Создаём таблицу settings с начальными значениями
+    ensureSettingsTableExists();
     
 } catch (PDOException $e) {
     error_log('Database connection failed: ' . $e->getMessage());

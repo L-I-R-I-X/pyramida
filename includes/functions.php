@@ -111,18 +111,20 @@ function updateSetting($key, $value) {
     global $pdo;
     
     try {
+        // Проверяем, существует ли запись
+        $stmt = $pdo->prepare("SELECT id FROM settings WHERE setting_key = :key");
+        $stmt->execute(['key' => $key]);
+        $result = $stmt->fetch();
         
-        $stmt = $pdo->prepare("
-            INSERT INTO settings (setting_key, setting_value) 
-            VALUES (:skey, :svalue)
-            ON DUPLICATE KEY UPDATE setting_value = :uvalue, updated_at = NOW()
-        ");
-        
-        return $stmt->execute([
-            'skey' => $key,
-            'svalue' => $value,
-            'uvalue' => $value
-        ]);
+        if ($result) {
+            // Обновляем существующую запись
+            $stmt = $pdo->prepare("UPDATE settings SET setting_value = :svalue, updated_at = NOW() WHERE setting_key = :key");
+            return $stmt->execute(['skey' => $key, 'svalue' => $value, 'key' => $key]);
+        } else {
+            // Вставляем новую запись
+            $stmt = $pdo->prepare("INSERT INTO settings (setting_key, setting_value) VALUES (:skey, :svalue)");
+            return $stmt->execute(['skey' => $key, 'svalue' => $value]);
+        }
     } catch (PDOException $e) {
         error_log('updateSetting error: ' . $e->getMessage());
         return false;
