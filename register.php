@@ -81,7 +81,7 @@ unset($_SESSION['form_data']);
                             </div>
                         <?php endif; ?>
                         
-                        <form method="POST" action="includes/upload.php" class="register-form" enctype="multipart/form-data">
+                        <form method="POST" action="includes/upload.php" id="registerForm" class="register-form" enctype="multipart/form-data">
                             <div class="form-group">
                                 <label for="fio">ФИО *</label>
                                 <input type="text" id="fio" name="fio" required 
@@ -135,18 +135,27 @@ unset($_SESSION['form_data']);
                                 
                                 <div class="form-group">
                                     <label for="section">Раздел *</label>
-                                    <select id="section" name="section" required>
-                                        <option value="">Выберите раздел</option>
-                                        <option value="Абстрактная" <?php echo ($formData['section'] ?? '') === 'Абстрактная' ? 'selected' : ''; ?>>Абстрактная</option>
-                                        <option value="Жанровая" <?php echo ($formData['section'] ?? '') === 'Жанровая' ? 'selected' : ''; ?>>Жанровая</option>
-                                        <option value="Шрифтовая" <?php echo ($formData['section'] ?? '') === 'Шрифтовая' ? 'selected' : ''; ?>>Шрифтовая</option>
-                                        <option value="Клаузура" <?php echo ($formData['section'] ?? '') === 'Клаузура' ? 'selected' : ''; ?>>Клаузура</option>
-                                        <option value="Рисунок к проекту" <?php echo ($formData['section'] ?? '') === 'Рисунок к проекту' ? 'selected' : ''; ?>>Рисунок к проекту</option>
-                                        <option value="Открытка" <?php echo ($formData['section'] ?? '') === 'Открытка' ? 'selected' : ''; ?>>Открытка</option>
-                                        <option value="Паттерн" <?php echo ($formData['section'] ?? '') === 'Паттерн' ? 'selected' : ''; ?>>Паттерн</option>
-                                        <option value="Архитектурный пейзаж" <?php echo ($formData['section'] ?? '') === 'Архитектурный пейзаж' ? 'selected' : ''; ?>>Архитектурный пейзаж</option>
-                                        <option value="Фотопроект" <?php echo ($formData['section'] ?? '') === 'Фотопроект' ? 'selected' : ''; ?>>Фотопроект</option>
-                                        <option value="Фотоколлаж" <?php echo ($formData['section'] ?? '') === 'Фотоколлаж' ? 'selected' : ''; ?>>Фотоколлаж</option>
+                                    <select id="section" name="section" required disabled>
+                                        <option value="">Сначала выберите номинацию</option>
+                                        <?php
+                                        // Восстанавливаем разделы при ошибке валидации
+                                        $savedNomination = $formData['nomination'] ?? '';
+                                        $savedSection = $formData['section'] ?? '';
+                                        
+                                        $sectionsByNomination = [
+                                            'arch_composition' => ['Абстрактная', 'Жанровая', 'Шрифтовая'],
+                                            'art_graphics' => ['Клаузура', 'Рисунок к проекту', 'Открытка', 'Паттерн'],
+                                            'nature_drawing' => ['Архитектурный пейзаж'],
+                                            'photography' => ['Фотопроект', 'Фотоколлаж']
+                                        ];
+                                        
+                                        if ($savedNomination && isset($sectionsByNomination[$savedNomination])):
+                                            foreach ($sectionsByNomination[$savedNomination] as $sect):
+                                                $selected = ($sect === $savedSection) ? 'selected' : '';
+                                                echo "<option value=\"" . htmlspecialchars($sect) . "\" $selected>" . htmlspecialchars($sect) . "</option>";
+                                            endforeach;
+                                        endif;
+                                        ?>
                                     </select>
                                 </div>
                             </div>

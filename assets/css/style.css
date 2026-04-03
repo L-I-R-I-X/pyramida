@@ -2097,3 +2097,10 @@ body {
 main {
     flex: 1;
 }
+
+/* Стили для заблокированного select */
+.form-group select:disabled {
+    background-color: var(--color-gray-light);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
