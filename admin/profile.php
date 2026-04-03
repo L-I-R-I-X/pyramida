@@ -44,9 +44,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$user || !password_verify($currentPassword, $user['password_hash'])) {
                 $message = 'Неверный текущий пароль';
                 $messageType = 'error';
-            } elseif (empty($newPassword) || strlen($newPassword) < 6) {
-                $message = 'Новый пароль должен быть не менее 6 символов';
-                $messageType = 'error';
             } elseif ($newPassword !== $confirmPassword) {
                 $message = 'Новые пароли не совпадают';
                 $messageType = 'error';
@@ -149,7 +146,7 @@ $isMainAdmin = $fullUserInfo && $fullUserInfo['role'] === 'main';
             <!-- Изменение пароля -->
             <div class="card">
                 <h3>🔒 Изменить пароль</h3>
-                <form method="POST">
+                <form method="POST" id="changePasswordForm">
                     <input type="hidden" name="action" value="change_password">
                     <div class="form-group">
                         <label for="current_password">Текущий пароль</label>
@@ -157,16 +154,89 @@ $isMainAdmin = $fullUserInfo && $fullUserInfo['role'] === 'main';
                     </div>
                     <div class="form-group">
                         <label for="new_password">Новый пароль</label>
-                        <input type="password" id="new_password" name="new_password" required minlength="6" placeholder="Введите новый пароль (минимум 6 символов)">
+                        <input type="password" id="new_password" name="new_password" required placeholder="Введите новый пароль">
+                        <div id="password_requirements" style="margin-top: 10px; padding: 10px; background: #F9F9F9; border-radius: 4px; font-size: 0.85rem;">
+                            <strong>Требования к паролю:</strong>
+                            <ul style="margin: 5px 0 0 20px; padding: 0;" id="requirements_list">
+                                <li id="req_length" style="color: #666;">Минимум 12 символов</li>
+                                <li id="req_uppercase" style="color: #666;">Хотя бы одна заглавная буква (A-Z, А-Я)</li>
+                                <li id="req_lowercase" style="color: #666;">Хотя бы одна строчная буква (a-z, а-я)</li>
+                                <li id="req_digit" style="color: #666;">Хотя бы одна цифра</li>
+                                <li id="req_special" style="color: #666;">Хотя бы один специальный символ (!@#$%^&* и т.д.)</li>
+                            </ul>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="confirm_password">Подтверждение нового пароля</label>
-                        <input type="password" id="confirm_password" name="confirm_password" required minlength="6" placeholder="Повторите новый пароль">
+                        <input type="password" id="confirm_password" name="confirm_password" required placeholder="Повторите новый пароль">
                     </div>
-                    <button type="submit" class="btn-primary">Изменить пароль</button>
+                    <button type="submit" class="btn-primary" id="submitPasswordBtn" disabled>Изменить пароль</button>
                 </form>
             </div>
         </main>
     </div>
+    <script>
+        // Валидация пароля в реальном времени для формы смены пароля
+        const newPasswordInput = document.getElementById('new_password');
+        const confirmPasswordInput = document.getElementById('confirm_password');
+        const submitPasswordBtn = document.getElementById('submitPasswordBtn');
+        
+        const reqLength = document.getElementById('req_length');
+        const reqUppercase = document.getElementById('req_uppercase');
+        const reqLowercase = document.getElementById('req_lowercase');
+        const reqDigit = document.getElementById('req_digit');
+        const reqSpecial = document.getElementById('req_special');
+        
+        function validatePassword(password) {
+            const validation = {
+                length: password.length >= 12,
+                uppercase: /[A-ZА-ЯЁ]/u.test(password),
+                lowercase: /[a-zа-яё]/u.test(password),
+                digit: /[0-9]/.test(password),
+                special: /[^A-Za-z0-9А-Яа-яЁё]/.test(password)
+            };
+            
+            // Обновляем визуальное состояние требований
+            updateRequirement(reqLength, validation.length);
+            updateRequirement(reqUppercase, validation.uppercase);
+            updateRequirement(reqLowercase, validation.lowercase);
+            updateRequirement(reqDigit, validation.digit);
+            updateRequirement(reqSpecial, validation.special);
+            
+            return Object.values(validation).every(v => v);
+        }
+        
+        function updateRequirement(element, isValid) {
+            if (isValid) {
+                element.style.color = '#4CAF50';
+                element.innerHTML = '✓ ' + element.textContent.replace('✓ ', '');
+            } else {
+                element.style.color = '#666';
+                element.innerHTML = element.textContent.replace('✓ ', '');
+            }
+        }
+        
+        function checkPasswordForm() {
+            const newPassword = newPasswordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+            
+            const isPasswordValid = validatePassword(newPassword);
+            const passwordsMatch = newPassword && confirmPassword && newPassword === confirmPassword;
+            
+            submitPasswordBtn.disabled = !(isPasswordValid && passwordsMatch);
+        }
+        
+        newPasswordInput.addEventListener('input', checkPasswordForm);
+        confirmPasswordInput.addEventListener('input', checkPasswordForm);
+        
+        // Предотвращаем отправку формы если пароль не валиден
+        document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
+            const newPassword = newPasswordInput.value;
+            if (!validatePassword(newPassword)) {
+                e.preventDefault();
+                alert('Пароль не соответствует требованиям безопасности');
+            }
+        });
+    </script>
 </body>
 </html>
