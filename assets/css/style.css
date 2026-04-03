@@ -1543,6 +1543,33 @@ input:focus + .toggle-slider {
     background: #E55E00;
 }
 
+.btn-primary {
+    background: #FF6B00;
+    color: #FFFFFF;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s;
+    display: inline-block;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.btn-primary:hover {
+    background: #E55E00;
+}
+
+.btn-primary:disabled {
+    background: #CCCCCC;
+    cursor: not-allowed;
+}
+
+.card .btn-primary {
+    margin-top: 20px;
+}
+
 .btn-sm {
     padding: 6px 12px;
     font-size: 0.85rem;

@@ -226,7 +226,7 @@ $admins = getAllAdmins();
                             </select>
                         </div>
                     </div>
-                    <button type="submit" class="btn-sm btn-primary" id="submitCreateBtn" disabled>Создать администратора</button>
+                    <button type="submit" class="btn-primary" id="submitCreateBtn" disabled>Создать администратора</button>
                 </form>
             </div>
         </main>
@@ -268,8 +268,8 @@ $admins = getAllAdmins();
                 </div>
                 
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button type="submit" name="action" value="change_username" class="btn-sm btn-primary">Изменить логин</button>
-                    <button type="submit" name="action" value="change_password" class="btn-sm btn-primary" id="editSubmitPasswordBtn" disabled>Изменить пароль</button>
+                    <button type="submit" name="action" value="change_username" class="btn-primary">Изменить логин</button>
+                    <button type="submit" name="action" value="change_password" class="btn-primary" id="editSubmitPasswordBtn" disabled>Изменить пароль</button>
                 </div>
             </form>
         </div>
