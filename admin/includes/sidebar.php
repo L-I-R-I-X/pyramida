@@ -16,7 +16,7 @@ $isMainAdmin = $fullUserInfo && $fullUserInfo['role'] === 'main';
 <aside class="admin-sidebar">
     <h2>🏛️ Пирамида</h2>
     
-    <div class="admin-user-info">
+    <div class="admin-user-info" style="cursor: pointer;" onclick="window.location.href='profile.php'">
         <span class="admin-user-icon">👤</span>
         <span class="admin-user-name"><?php echo htmlspecialchars($currentUser['username']); ?></span>
         <?php if ($isMainAdmin): ?>
@@ -30,6 +30,7 @@ $isMainAdmin = $fullUserInfo && $fullUserInfo['role'] === 'main';
         <a href="applications.php" class="<?php echo basename($_SERVER['PHP_SELF']) === 'applications.php' ? 'active' : ''; ?>">Заявки</a>
         <a href="moderation.php" class="<?php echo basename($_SERVER['PHP_SELF']) === 'moderation.php' ? 'active' : ''; ?>">Модерация</a>
         <a href="export.php" class="<?php echo basename($_SERVER['PHP_SELF']) === 'export.php' ? 'active' : ''; ?>">Экспорт данных</a>
+        <a href="profile.php" class="<?php echo basename($_SERVER['PHP_SELF']) === 'profile.php' ? 'active' : ''; ?>">Мой аккаунт</a>
         <a href="site-settings.php" class="<?php echo basename($_SERVER['PHP_SELF']) === 'site-settings.php' ? 'active' : ''; ?>">Настройки сайта</a>
         <?php if ($isMainAdmin): ?>
             <a href="settings.php" class="<?php echo basename($_SERVER['PHP_SELF']) === 'settings.php' ? 'active' : ''; ?>">Администраторы</a>
