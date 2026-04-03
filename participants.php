@@ -8,7 +8,7 @@ require_once 'includes/db.php';
 require_once 'includes/functions.php';
 
 $showTable = getSetting('show_participants_table', '0');
-$showCertificates = getSetting('show_certificates', '1');
+$showCertificates = getSetting('show_certificates', '0');
 
 if ($showTable !== '1') {
     header('Location: index.php');

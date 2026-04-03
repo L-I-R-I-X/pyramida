@@ -8,7 +8,7 @@ require_once 'includes/db.php';
 require_once 'includes/functions.php';
 
 $showTable = getSetting('show_winners_table', '0');
-$showDiplomas = getSetting('show_diplomas', '1');
+$showDiplomas = getSetting('show_diplomas', '0');
 
 if ($showTable !== '1') {
     header('Location: index.php');
