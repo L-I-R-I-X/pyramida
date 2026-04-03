@@ -25,9 +25,11 @@ function initAuthTables() {
                 username VARCHAR(50) UNIQUE NOT NULL,
                 password_hash VARCHAR(255) NOT NULL,
                 email VARCHAR(100),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                is_active TINYINT(1) DEFAULT 1
+                created_at DATETIME NOT NULL,
+                updated_at DATETIME NOT NULL,
+                is_active TINYINT(1) DEFAULT 1,
+                INDEX idx_username (username),
+                INDEX idx_is_active (is_active)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
         
@@ -99,11 +101,14 @@ function createDefaultUser($username = 'admin', $password = 'admin123') {
         
         if ($count == 0) {
             $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare("INSERT INTO admin_users (username, password_hash, email) VALUES (:username, :password, :email)");
+            $now = date('Y-m-d H:i:s');
+            $stmt = $pdo->prepare("INSERT INTO admin_users (username, password_hash, email, created_at, updated_at, is_active) VALUES (:username, :password, :email, :created_at, :updated_at, 1)");
             $stmt->execute([
                 'username' => $username,
                 'password' => $passwordHash,
-                'email' => 'admin@localhost'
+                'email' => 'admin@localhost',
+                'created_at' => $now,
+                'updated_at' => $now
             ]);
             return true;
         }
