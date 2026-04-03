@@ -1,1 +1,1 @@
-Nothing should be ignored based on the provided file changes. The modified files ('includes/db.php', 'includes/functions.php') are PHP source code files that should not be ignored.
+Nothing should be ignored since the changes only include source code files (.php) without any build artifacts, dependencies, or temporary files.

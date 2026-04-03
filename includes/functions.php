@@ -93,7 +93,7 @@ function redirect($url, $message = '', $type = 'success') {
     exit;
 }
 
-function getSetting($key, $default = '') {
+function getSetting($key, $default = '0') {
     global $pdo;
     
     try {
@@ -101,7 +101,13 @@ function getSetting($key, $default = '') {
         $stmt->execute(['key' => $key]);
         $result = $stmt->fetch();
         
-        return $result ? $result['setting_value'] : $default;
+        if ($result) {
+            return $result['setting_value'];
+        } else {
+            // Если записи нет, создаём её со значением по умолчанию (0)
+            updateSetting($key, $default);
+            return $default;
+        }
     } catch (PDOException $e) {
         return $default;
     }
@@ -118,12 +124,12 @@ function updateSetting($key, $value) {
         
         if ($result) {
             // Обновляем существующую запись
-            $stmt = $pdo->prepare("UPDATE settings SET setting_value = :svalue, updated_at = NOW() WHERE setting_key = :key");
-            return $stmt->execute(['skey' => $key, 'svalue' => $value, 'key' => $key]);
+            $stmt = $pdo->prepare("UPDATE settings SET setting_value = :value, updated_at = NOW() WHERE setting_key = :key");
+            return $stmt->execute(['value' => $value, 'key' => $key]);
         } else {
             // Вставляем новую запись
-            $stmt = $pdo->prepare("INSERT INTO settings (setting_key, setting_value) VALUES (:skey, :svalue)");
-            return $stmt->execute(['skey' => $key, 'svalue' => $value]);
+            $stmt = $pdo->prepare("INSERT INTO settings (setting_key, setting_value) VALUES (:key, :value)");
+            return $stmt->execute(['key' => $key, 'value' => $value]);
         }
     } catch (PDOException $e) {
         error_log('updateSetting error: ' . $e->getMessage());

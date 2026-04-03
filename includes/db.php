@@ -93,7 +93,7 @@ function ensureSettingsTableExists() {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
         
-        // Вставляем настройки по умолчанию со значением 0, если они ещё не существуют
+        // Вставляем настройки по умолчанию со значением '0', если они ещё не существуют
         $defaultSettings = [
             'show_participants_table' => '0',
             'show_winners_table' => '0',
@@ -104,11 +104,11 @@ function ensureSettingsTableExists() {
         
         $stmt = $pdo->prepare("
             INSERT IGNORE INTO settings (setting_key, setting_value) 
-            VALUES (:skey, :svalue)
+            VALUES (:key, :value)
         ");
         
-        foreach ($defaultSettings as $key => $value) {
-            $stmt->execute(['skey' => $key, 'svalue' => $value]);
+        foreach ($defaultSettings as $key => $defaultValue) {
+            $stmt->execute(['key' => $key, 'value' => $defaultValue]);
         }
         
         return true;
