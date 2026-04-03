@@ -1,18 +1,29 @@
 <?php
 /**
- * Система аутентификации с хранением сессий в БД
+ * Система аутентификации с хранением сессий в файлах (/cache/sessions)
  */
 
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 
+// Путь для хранения файлов сессий
+define('SESSION_DIR', CACHE_DIR . 'sessions/');
 // Название cookie для сессии
 define('SESSION_COOKIE_NAME', 'admin_session');
 // Время жизни сессии (30 дней)
 define('SESSION_LIFETIME', 30 * 24 * 60 * 60);
 
 /**
- * Создание таблицы пользователей и сессий, если они не существуют
+ * Убедиться, что директория сессий существует
+ */
+function ensureSessionDirExists() {
+    if (!is_dir(SESSION_DIR)) {
+        mkdir(SESSION_DIR, 0755, true);
+    }
+}
+
+/**
+ * Создание таблицы пользователей, если она не существует
  */
 function initAuthTables() {
     global $pdo;
@@ -38,45 +49,6 @@ function initAuthTables() {
         if ($stmt->rowCount() == 0) {
             error_log('initAuthTables: Таблица admin_users НЕ была создана');
             return false;
-        }
-        
-        // Таблица сессий
-        $pdo->exec("
-            CREATE TABLE IF NOT EXISTS admin_sessions (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                user_id INT NOT NULL,
-                session_token VARCHAR(64) UNIQUE NOT NULL,
-                ip_address VARCHAR(45),
-                user_agent VARCHAR(255),
-                created_at DATETIME NOT NULL,
-                expires_at DATETIME NOT NULL,
-                last_activity DATETIME NOT NULL,
-                INDEX idx_session_token (session_token),
-                INDEX idx_user_id (user_id),
-                INDEX idx_expires_at (expires_at)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-        ");
-        
-        // Проверяем, создана ли таблица сессий
-        $stmt = $pdo->query("SHOW TABLES LIKE 'admin_sessions'");
-        if ($stmt->rowCount() == 0) {
-            error_log('initAuthTables: Таблица admin_sessions НЕ была создана');
-            return false;
-        }
-        
-        // Создаём индекс для быстрой проверки сессий
-        try {
-            $pdo->exec("CREATE INDEX IF NOT EXISTS idx_session_token ON admin_sessions(session_token)");
-        } catch (PDOException $e) {
-            // Индекс может уже существовать
-            error_log('initAuthTables warning: idx_session_token - ' . $e->getMessage());
-        }
-        
-        try {
-            $pdo->exec("CREATE INDEX IF NOT EXISTS idx_expires_at ON admin_sessions(expires_at)");
-        } catch (PDOException $e) {
-            // Индекс может уже существовать
-            error_log('initAuthTables warning: idx_expires_at - ' . $e->getMessage());
         }
         
     } catch (PDOException $e) {
@@ -127,6 +99,13 @@ function generateSessionToken() {
 }
 
 /**
+ * Получение пути к файлу сессии по токену
+ */
+function getSessionFile($sessionToken) {
+    return SESSION_DIR . 'sess_' . $sessionToken . '.dat';
+}
+
+/**
  * Аутентификация пользователя
  * @param string $username
  * @param string $password
@@ -162,26 +141,22 @@ function authenticate($username, $password) {
 }
 
 /**
- * Создание сессии в БД
+ * Создание сессии в файле
  * @param int $userId
  * @return array ['success' => bool, 'message' => string, 'token' => string|null]
  */
 function createSession($userId) {
-    global $pdo;
+    ensureSessionDirExists();
     
     try {
         $sessionToken = generateSessionToken();
         $ipAddress = $_SERVER['REMOTE_ADDR'] ?? '';
         $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-        $now = date('Y-m-d H:i:s');
-        $expiresAt = date('Y-m-d H:i:s', time() + SESSION_LIFETIME);
+        $now = time();
+        $expiresAt = $now + SESSION_LIFETIME;
         
-        $stmt = $pdo->prepare("
-            INSERT INTO admin_sessions (user_id, session_token, ip_address, user_agent, created_at, expires_at, last_activity) 
-            VALUES (:user_id, :session_token, :ip_address, :user_agent, :created_at, :expires_at, :last_activity)
-        ");
-        
-        $stmt->execute([
+        // Данные сессии
+        $sessionData = [
             'user_id' => $userId,
             'session_token' => $sessionToken,
             'ip_address' => $ipAddress,
@@ -189,14 +164,18 @@ function createSession($userId) {
             'created_at' => $now,
             'expires_at' => $expiresAt,
             'last_activity' => $now
-        ]);
+        ];
+        
+        // Сохраняем сессию в файл
+        $sessionFile = getSessionFile($sessionToken);
+        file_put_contents($sessionFile, json_encode($sessionData));
         
         // Устанавливаем cookie с токеном сессии
         setcookie(
             SESSION_COOKIE_NAME,
             $sessionToken,
             [
-                'expires' => time() + SESSION_LIFETIME,
+                'expires' => $expiresAt,
                 'path' => '/',
                 'domain' => '',
                 'secure' => isset($_SERVER['HTTPS']),
@@ -207,10 +186,32 @@ function createSession($userId) {
         
         return ['success' => true, 'message' => 'Вход выполнен успешно', 'token' => $sessionToken];
         
-    } catch (PDOException $e) {
+    } catch (Exception $e) {
         error_log('createSession error: ' . $e->getMessage());
         return ['success' => false, 'message' => 'Ошибка создания сессии'];
     }
+}
+
+/**
+ * Чтение данных сессии из файла
+ * @param string $sessionToken
+ * @return array|null
+ */
+function readSessionFile($sessionToken) {
+    $sessionFile = getSessionFile($sessionToken);
+    
+    if (!file_exists($sessionFile)) {
+        return null;
+    }
+    
+    $data = file_get_contents($sessionFile);
+    $session = json_decode($data, true);
+    
+    if (!$session) {
+        return null;
+    }
+    
+    return $session;
 }
 
 /**
@@ -225,47 +226,48 @@ function checkAuth() {
     }
     
     $sessionToken = $_COOKIE[SESSION_COOKIE_NAME];
+    $session = readSessionFile($sessionToken);
     
+    if (!$session) {
+        // Сессия не найдена
+        destroySession($sessionToken);
+        return null;
+    }
+    
+    // Проверяем срок действия
+    if ($session['expires_at'] < time()) {
+        // Сессия истекла
+        destroySession($sessionToken);
+        return null;
+    }
+    
+    // Получаем данные пользователя из БД
     try {
-        // Проверяем сессию в БД
-        $stmt = $pdo->prepare("
-            SELECT s.id, s.user_id, s.expires_at, u.username, u.email, u.is_active
-            FROM admin_sessions s
-            JOIN admin_users u ON s.user_id = u.id
-            WHERE s.session_token = :session_token
-            AND s.expires_at > NOW()
-            AND u.is_active = 1
-        ");
+        $stmt = $pdo->prepare("SELECT id, username, email, is_active FROM admin_users WHERE id = :user_id AND is_active = 1");
+        $stmt->execute(['user_id' => $session['user_id']]);
+        $user = $stmt->fetch();
         
-        $stmt->execute(['session_token' => $sessionToken]);
-        $session = $stmt->fetch();
-        
-        if (!$session) {
-            // Сессия не найдена или истекла
+        if (!$user) {
+            // Пользователь не найден или заблокирован
             destroySession($sessionToken);
             return null;
         }
         
         // Обновляем время последней активности и продлеваем сессию
-        $newExpiresAt = date('Y-m-d H:i:s', time() + SESSION_LIFETIME);
-        $now = date('Y-m-d H:i:s');
-        $stmt = $pdo->prepare("
-            UPDATE admin_sessions 
-            SET last_activity = :last_activity, expires_at = :expires_at 
-            WHERE session_token = :session_token
-        ");
-        $stmt->execute([
-            'last_activity' => $now,
-            'expires_at' => $newExpiresAt,
-            'session_token' => $sessionToken
-        ]);
+        $newExpiresAt = time() + SESSION_LIFETIME;
+        $session['last_activity'] = time();
+        $session['expires_at'] = $newExpiresAt;
+        
+        // Сохраняем обновлённую сессию
+        $sessionFile = getSessionFile($sessionToken);
+        file_put_contents($sessionFile, json_encode($session));
         
         // Обновляем cookie с новым временем истечения
         setcookie(
             SESSION_COOKIE_NAME,
             $sessionToken,
             [
-                'expires' => time() + SESSION_LIFETIME,
+                'expires' => $newExpiresAt,
                 'path' => '/',
                 'domain' => '',
                 'secure' => isset($_SERVER['HTTPS']),
@@ -275,9 +277,9 @@ function checkAuth() {
         );
         
         return [
-            'id' => $session['user_id'],
-            'username' => $session['username'],
-            'email' => $session['email']
+            'id' => $user['id'],
+            'username' => $user['username'],
+            'email' => $user['email']
         ];
         
     } catch (PDOException $e) {
@@ -291,18 +293,14 @@ function checkAuth() {
  * @param string|null $sessionToken
  */
 function destroySession($sessionToken = null) {
-    global $pdo;
-    
     if ($sessionToken === null && isset($_COOKIE[SESSION_COOKIE_NAME])) {
         $sessionToken = $_COOKIE[SESSION_COOKIE_NAME];
     }
     
     if ($sessionToken) {
-        try {
-            $stmt = $pdo->prepare("DELETE FROM admin_sessions WHERE session_token = :session_token");
-            $stmt->execute(['session_token' => $sessionToken]);
-        } catch (PDOException $e) {
-            error_log('destroySession error: ' . $e->getMessage());
+        $sessionFile = getSessionFile($sessionToken);
+        if (file_exists($sessionFile)) {
+            unlink($sessionFile);
         }
     }
     
@@ -319,6 +317,27 @@ function destroySession($sessionToken = null) {
             'samesite' => 'Strict'
         ]
     );
+}
+
+/**
+ * Очистка старых сессий (сборщик мусора)
+ */
+function cleanupOldSessions() {
+    ensureSessionDirExists();
+    
+    $currentTime = time();
+    $files = glob(SESSION_DIR . 'sess_*.dat');
+    
+    if ($files) {
+        foreach ($files as $file) {
+            $data = file_get_contents($file);
+            $session = json_decode($data, true);
+            
+            if ($session && isset($session['expires_at']) && $session['expires_at'] < $currentTime) {
+                unlink($file);
+            }
+        }
+    }
 }
 
 /**
@@ -382,18 +401,30 @@ function changePassword($userId, $newPassword) {
  * @param int $userId
  */
 function destroyAllUserSessions($userId) {
-    global $pdo;
+    ensureSessionDirExists();
     
-    try {
-        $stmt = $pdo->prepare("DELETE FROM admin_sessions WHERE user_id = :user_id");
-        $stmt->execute(['user_id' => $userId]);
-    } catch (PDOException $e) {
-        error_log('destroyAllUserSessions error: ' . $e->getMessage());
+    $files = glob(SESSION_DIR . 'sess_*.dat');
+    
+    if ($files) {
+        foreach ($files as $file) {
+            $data = file_get_contents($file);
+            $session = json_decode($data, true);
+            
+            if ($session && isset($session['user_id']) && $session['user_id'] == $userId) {
+                unlink($file);
+            }
+        }
     }
 }
 
 // Инициализация таблиц при подключении
+ensureSessionDirExists();
 initAuthTables();
 
 // Создаём пользователя по умолчанию если нет пользователей
 createDefaultUser();
+
+// Очищаем старые сессии периодически
+if (rand(1, 100) <= 5) { // 5% шанс при каждом запросе
+    cleanupOldSessions();
+}
