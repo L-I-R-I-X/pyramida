@@ -1,75 +1,43 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Данные о разделах для каждой номинации (из положения)
-    const sectionsByNomination = {
-        'arch_composition': [
-            'Абстрактная',
-            'Жанровая',
-            'Шрифтовая'
-        ],
-        'art_graphics': [
-            'Клаузура',
-            'Рисунок к проекту',
-            'Открытка',
-            'Паттерн'
-        ],
-        'nature_drawing': [
-            'Архитектурный пейзаж'
-        ],
-        'photography': [
-            'Фотопроект',
-            'Фотоколлаж'
-        ]
+    // Маппинг значений объединённого поля на номинацию и раздел
+    const nominationSectionMap = {
+        'arch_composition_abstract': { nomination: 'arch_composition', section: 'Абстрактная' },
+        'arch_composition_genre': { nomination: 'arch_composition', section: 'Жанровая' },
+        'arch_composition_typographic': { nomination: 'arch_composition', section: 'Шрифтовая' },
+        'art_graphics_clausura': { nomination: 'art_graphics', section: 'Клаузура' },
+        'art_graphics_project_drawing': { nomination: 'art_graphics', section: 'Рисунок к проекту' },
+        'art_graphics_postcard': { nomination: 'art_graphics', section: 'Открытка' },
+        'art_graphics_pattern': { nomination: 'art_graphics', section: 'Паттерн' },
+        'nature_drawing_landscape': { nomination: 'nature_drawing', section: 'Архитектурный пейзаж' },
+        'photography_photo_project': { nomination: 'photography', section: 'Фотопроект' },
+        'photography_photo_collage': { nomination: 'photography', section: 'Фотоколлаж' }
     };
 
-    const nominationSelect = document.getElementById('nomination');
-    const sectionSelect = document.getElementById('section');
+    const nominationSectionSelect = document.getElementById('nomination_section');
+    const nominationInput = document.getElementById('nomination');
+    const sectionInput = document.getElementById('section');
     
-    // Функция обновления разделов в зависимости от выбранной номинации
-    function updateSections() {
-        const selectedNomination = nominationSelect.value;
+    // Функция обновления скрытых полей при выборе номинации и раздела
+    function updateHiddenFields() {
+        const selectedValue = nominationSectionSelect.value;
         
-        // Очищаем текущие опции
-        sectionSelect.innerHTML = '<option value="">Выберите раздел</option>';
-        
-        if (!selectedNomination) {
-            // Если номинация не выбрана - блокируем выбор разделов
-            sectionSelect.disabled = true;
-            sectionSelect.innerHTML = '<option value="">Сначала выберите номинацию</option>';
+        if (!selectedValue || !nominationSectionMap[selectedValue]) {
+            if (nominationInput) nominationInput.value = '';
+            if (sectionInput) sectionInput.value = '';
             return;
         }
         
-        // Получаем разделы для выбранной номинации
-        const sections = sectionsByNomination[selectedNomination] || [];
-        
-        // Добавляем опции разделов
-        sections.forEach(function(section) {
-            const option = document.createElement('option');
-            option.value = section;
-            option.textContent = section;
-            sectionSelect.appendChild(option);
-        });
-        
-        // Разблокируем выбор разделов
-        sectionSelect.disabled = false;
+        const data = nominationSectionMap[selectedValue];
+        if (nominationInput) nominationInput.value = data.nomination;
+        if (sectionInput) sectionInput.value = data.section;
     }
     
-    // Слушаем изменения в выборе номинации
-    if (nominationSelect) {
-        nominationSelect.addEventListener('change', updateSections);
+    // Слушаем изменения в выборе номинации и раздела
+    if (nominationSectionSelect) {
+        nominationSectionSelect.addEventListener('change', updateHiddenFields);
         
-        // Восстанавливаем разделы при загрузке страницы (если номинация уже выбрана)
-        // Это нужно для случая, когда форма показывается с ошибками валидации
-        const savedNomination = nominationSelect.value;
-        if (savedNomination) {
-            updateSections();
-            
-            // Восстанавливаем выбранный раздел, если он был сохранён
-            const sectionSelectCurrent = document.getElementById('section');
-            const savedSection = '<?php echo htmlspecialchars($formData['section'] ?? '', ENT_QUOTES); ?>';
-            if (savedSection && sectionSelectCurrent) {
-                sectionSelectCurrent.value = savedSection;
-            }
-        }
+        // Инициализируем скрытые поля при загрузке страницы
+        updateHiddenFields();
     }
     
     const form = document.getElementById('registerForm');
@@ -111,14 +79,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // Дополнительная проверка: выбрана ли номинация и раздел
-            if (nominationSelect && !nominationSelect.value) {
+            if (nominationSectionSelect && !nominationSectionSelect.value) {
                 e.preventDefault();
-                alert('Пожалуйста, выберите номинацию');
-                return;
-            }
-            if (sectionSelect && !sectionSelect.value) {
-                e.preventDefault();
-                alert('Пожалуйста, выберите раздел');
+                alert('Пожалуйста, выберите номинацию и раздел');
                 return;
             }
         });

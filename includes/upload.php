@@ -13,6 +13,7 @@ $fio = sanitizeInput($_POST['fio'] ?? '');
 
 $educational_institution = sanitizeInput($_POST['educational_institution'] ?? '');
 $course = sanitizeInput($_POST['course'] ?? '');
+$nominationSection = sanitizeInput($_POST['nomination_section'] ?? '');
 $nomination = sanitizeInput($_POST['nomination'] ?? '');
 $section = sanitizeInput($_POST['section'] ?? '');
 $work_title = sanitizeInput($_POST['work_title'] ?? '');
@@ -34,12 +35,8 @@ if (empty($course)) {
     $errors[] = 'Укажите курс';
 }
 
-if (empty($nomination)) {
-    $errors[] = 'Выберите номинацию';
-}
-
-if (empty($section)) {
-    $errors[] = 'Выберите раздел';
+if (empty($nominationSection)) {
+    $errors[] = 'Выберите номинацию и раздел';
 }
 
 if (empty($work_title)) {
@@ -61,6 +58,10 @@ if (!isset($_FILES['work']) || $_FILES['work']['error'] !== UPLOAD_ERR_OK) {
 if (!empty($errors)) {
     $_SESSION['form_errors'] = $errors;
     $_SESSION['form_data'] = $_POST;
+    // Сохраняем nomination_section для восстановления формы
+    if (!empty($nominationSection)) {
+        $_SESSION['form_data']['nomination_section'] = $nominationSection;
+    }
     redirect(SITE_URL . 'register.php', 'Исправьте ошибки в форме', 'error');
 }
 

@@ -121,44 +121,36 @@ unset($_SESSION['form_data']);
                                        value="<?php echo htmlspecialchars($formData['email'] ?? ''); ?>">
                             </div>
                             
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="nomination">Номинация *</label>
-                                    <select id="nomination" name="nomination" required>
-                                        <option value="">Выберите номинацию</option>
-                                        <option value="arch_composition" <?php echo ($formData['nomination'] ?? '') === 'arch_composition' ? 'selected' : ''; ?>>Архитектурная композиция</option>
-                                        <option value="art_graphics" <?php echo ($formData['nomination'] ?? '') === 'art_graphics' ? 'selected' : ''; ?>>Художественно-проектная графика</option>
-                                        <option value="nature_drawing" <?php echo ($formData['nomination'] ?? '') === 'nature_drawing' ? 'selected' : ''; ?>>Рисунок с натуры</option>
-                                        <option value="photography" <?php echo ($formData['nomination'] ?? '') === 'photography' ? 'selected' : ''; ?>>Фотография</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="section">Раздел *</label>
-                                    <select id="section" name="section" required disabled>
-                                        <option value="">Сначала выберите номинацию</option>
-                                        <?php
-                                        // Восстанавливаем разделы при ошибке валидации
-                                        $savedNomination = $formData['nomination'] ?? '';
-                                        $savedSection = $formData['section'] ?? '';
-                                        
-                                        $sectionsByNomination = [
-                                            'arch_composition' => ['Абстрактная', 'Жанровая', 'Шрифтовая'],
-                                            'art_graphics' => ['Клаузура', 'Рисунок к проекту', 'Открытка', 'Паттерн'],
-                                            'nature_drawing' => ['Архитектурный пейзаж'],
-                                            'photography' => ['Фотопроект', 'Фотоколлаж']
-                                        ];
-                                        
-                                        if ($savedNomination && isset($sectionsByNomination[$savedNomination])):
-                                            foreach ($sectionsByNomination[$savedNomination] as $sect):
-                                                $selected = ($sect === $savedSection) ? 'selected' : '';
-                                                echo "<option value=\"" . htmlspecialchars($sect) . "\" $selected>" . htmlspecialchars($sect) . "</option>";
-                                            endforeach;
-                                        endif;
-                                        ?>
-                                    </select>
-                                </div>
+                            <div class="form-group">
+                                <label for="nomination_section">Номинация и раздел *</label>
+                                <select id="nomination_section" name="nomination_section" required>
+                                    <option value="">Выберите номинацию и раздел</option>
+                                    <?php
+                                    $savedNominationSection = $formData['nomination_section'] ?? '';
+                                    
+                                    $options = [
+                                        'arch_composition_abstract' => 'Архитектурная композиция: Абстрактная',
+                                        'arch_composition_genre' => 'Архитектурная композиция: Жанровая',
+                                        'arch_composition_typographic' => 'Архитектурная композиция: Шрифтовая',
+                                        'art_graphics_clausura' => 'Художественно-проектная графика: Клаузура',
+                                        'art_graphics_project_drawing' => 'Художественно-проектная графика: Рисунок к проекту',
+                                        'art_graphics_postcard' => 'Художественно-проектная графика: Открытка',
+                                        'art_graphics_pattern' => 'Художественно-проектная графика: Паттерн',
+                                        'nature_drawing_landscape' => 'Рисунок с натуры: Архитектурный пейзаж',
+                                        'photography_photo_project' => 'Фотография: Фотопроект',
+                                        'photography_photo_collage' => 'Фотография: Фотоколлаж'
+                                    ];
+                                    
+                                    foreach ($options as $value => $label):
+                                        $selected = ($value === $savedNominationSection) ? 'selected' : '';
+                                        echo "<option value=\"" . htmlspecialchars($value) . "\" $selected>" . htmlspecialchars($label) . "</option>";
+                                    endforeach;
+                                    ?>
+                                </select>
                             </div>
+                            
+                            <input type="hidden" id="nomination" name="nomination" value="">
+                            <input type="hidden" id="section" name="section" value="">
                             
                             <div class="form-group">
                                 <label for="work_title">Название работы *</label>
