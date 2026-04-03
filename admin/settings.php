@@ -1,8 +1,4 @@
 <?php
-$configFile = __DIR__ . '/../includes/config.php';
-if (!file_exists($configFile)) {
-    die('Ошибка: Файл config.php не найден.');
-}
 require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/functions.php';
@@ -15,63 +11,103 @@ if (!$currentUser) {
     exit;
 }
 
+// Получаем полную информацию о пользователе включая роль
+$fullUserInfo = getUserById($currentUser['id']);
+$isMainAdmin = $fullUserInfo && $fullUserInfo['role'] === 'main';
+
+// Если не главный администратор - перенаправляем
+if (!$isMainAdmin) {
+    header('Location: applications.php');
+    exit;
+}
+
 $message = '';
 $messageType = '';
 
+// Обработка действий
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $showParticipants = isset($_POST['show_participants_table']) ? '1' : '0';
-    $showWinners = isset($_POST['show_winners_table']) ? '1' : '0';
-    $showGallery = isset($_POST['show_gallery']) ? '1' : '0';
-    $showCertificates = isset($_POST['show_certificates']) ? '1' : '0';
-    $showDiplomas = isset($_POST['show_diplomas']) ? '1' : '0';
+    $action = $_POST['action'] ?? '';
     
-    updateSetting('show_participants_table', $showParticipants);
-    updateSetting('show_winners_table', $showWinners);
-    updateSetting('show_gallery', $showGallery);
-    updateSetting('show_certificates', $showCertificates);
-    updateSetting('show_diplomas', $showDiplomas);
-    
-    $message = 'Настройки сохранены';
-    $messageType = 'success';
+    if ($action === 'create_admin') {
+        $username = trim($_POST['username'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $role = $_POST['role'] ?? 'regular';
+        $email = trim($_POST['email'] ?? '');
+        
+        $result = createAdminUser($username, $password, $role, $email);
+        $message = $result['message'];
+        $messageType = $result['success'] ? 'success' : 'error';
+        
+    } elseif ($action === 'delete_admin') {
+        $adminId = (int)($_POST['admin_id'] ?? 0);
+        if ($adminId > 0 && $adminId !== $currentUser['id']) {
+            $result = deleteAdminUser($adminId);
+            $message = $result['message'];
+            $messageType = $result['success'] ? 'success' : 'error';
+        }
+        
+    } elseif ($action === 'change_role') {
+        $adminId = (int)($_POST['admin_id'] ?? 0);
+        $newRole = $_POST['role'] ?? 'regular';
+        if ($adminId > 0 && $adminId !== $currentUser['id']) {
+            $result = changeAdminRole($adminId, $newRole);
+            $message = $result['message'];
+            $messageType = $result['success'] ? 'success' : 'error';
+        }
+        
+    } elseif ($action === 'change_username') {
+        $adminId = (int)($_POST['admin_id'] ?? 0);
+        $newUsername = trim($_POST['new_username'] ?? '');
+        if ($adminId > 0 && ($adminId === $currentUser['id'] || $isMainAdmin)) {
+            $result = changeUsername($adminId, $newUsername);
+            $message = $result['message'];
+            $messageType = $result['success'] ? 'success' : 'error';
+        }
+        
+    } elseif ($action === 'change_password') {
+        $adminId = (int)($_POST['admin_id'] ?? 0);
+        $newPassword = $_POST['new_password'] ?? '';
+        if ($adminId > 0 && ($adminId === $currentUser['id'] || $isMainAdmin)) {
+            $result = changePassword($adminId, $newPassword);
+            $message = $result['message'];
+            $messageType = $result['success'] ? 'success' : 'error';
+        }
+    }
 }
 
-$showParticipants = getSetting('show_participants_table', '0');
-$showWinners = getSetting('show_winners_table', '0');
-$showGallery = getSetting('show_gallery', '0');
-$showCertificates = getSetting('show_certificates', '0');
-$showDiplomas = getSetting('show_diplomas', '0');
-
-try {
-    $stmt = $pdo->query("SELECT COUNT(*) as total FROM applications");
-    $totalParticipants = $stmt->fetch()['total'];
-    
-    $stmt = $pdo->query("SELECT COUNT(*) as total FROM applications WHERE is_published = 1");
-    $publishedWorks = $stmt->fetch()['total'];
-} catch (PDOException $e) {
-    $totalParticipants = 0;
-    $publishedWorks = 0;
-}
+// Получаем список всех администраторов
+$admins = getAllAdmins();
 ?>
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Настройки — Админ-панель</title>
+    <title>Администраторы — Админ-панель</title>
     <link rel="stylesheet" href="../assets/css/style.css">
     <style>
-        .setting-control { display: flex; align-items: center; justify-content: flex-end; }
-        .toggle-switch { position: relative; display: inline-block; width: 60px; height: 34px; margin: 0; }
-        .toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
-        .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cccccc; transition: 0.4s; border-radius: 34px; }
-        .toggle-slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: 0.4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-        input:checked + .toggle-slider { background-color: #FF6B00; }
-        input:checked + .toggle-slider:before { transform: translateX(26px); }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .alert { padding: 15px; border-radius: 4px; margin-bottom: 20px; }
-        .alert-success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
-        .btn-save { background: #FF6B00; color: #FFFFFF; padding: 12px 30px; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; margin-top: 20px; }
-        .btn-save:hover { background: #E55E00; }
+        .admins-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        .admins-table th, .admins-table td { padding: 12px; text-align: left; border-bottom: 1px solid #E0E0E0; }
+        .admins-table th { background: #F5F5F5; font-weight: 600; color: #1A1A1A; }
+        .admins-table tr:hover { background: #F9F9F9; }
+        .role-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 500; }
+        .role-badge.main { background: #FF6B00; color: #FFFFFF; }
+        .role-badge.regular { background: #E0E0E0; color: #666666; }
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 500; }
+        .status-badge.active { background: #4CAF50; color: #FFFFFF; }
+        .status-badge.inactive { background: #9E9E9E; color: #FFFFFF; }
+        .card { background: #FFFFFF; border-radius: 8px; padding: 25px; margin-bottom: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .card h3 { margin-top: 0; margin-bottom: 20px; color: #1A1A1A; }
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
+        .form-group { flex: 1; }
+        .form-group label { display: block; margin-bottom: 8px; color: #1A1A1A; font-weight: 500; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #E0E0E0; border-radius: 4px; font-size: 0.95rem; box-sizing: border-box; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal-content { background: #FFFFFF; margin: 10% auto; padding: 30px; border-radius: 8px; max-width: 500px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h3 { margin: 0; }
+        .close { cursor: pointer; font-size: 1.5rem; color: #999; }
+        .close:hover { color: #333; }
     </style>
 </head>
 <body>
@@ -80,107 +116,163 @@ try {
         
         <main class="admin-content">
             <div class="admin-header">
-                <h1>Настройки сайта</h1>
+                <h1>👥 Управление администраторами</h1>
             </div>
             
             <?php if ($message): ?>
-                <div class="alert alert-<?php echo $messageType; ?>">
+                <div class="alert alert-<?php echo htmlspecialchars($messageType); ?>">
                     <?php echo htmlspecialchars($message); ?>
                 </div>
             <?php endif; ?>
             
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-number"><?php echo $totalParticipants; ?></div>
-                    <div class="stat-label">Всего участников</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number"><?php echo $publishedWorks; ?></div>
-                    <div class="stat-label">Опубликованных работ</div>
-                </div>
+            <!-- Список администраторов -->
+            <div class="card">
+                <h3>Все администраторы</h3>
+                <table class="admins-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Логин</th>
+                            <th>Email</th>
+                            <th>Роль</th>
+                            <th>Статус</th>
+                            <th>Дата создания</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($admins as $admin): ?>
+                            <tr>
+                                <td><?php echo $admin['id']; ?></td>
+                                <td><?php echo htmlspecialchars($admin['username']); ?></td>
+                                <td><?php echo htmlspecialchars($admin['email'] ?: '—'); ?></td>
+                                <td>
+                                    <span class="role-badge <?php echo $admin['role']; ?>">
+                                        <?php echo $admin['role'] === 'main' ? 'Главный' : 'Обычный'; ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="status-badge <?php echo $admin['is_active'] ? 'active' : 'inactive'; ?>">
+                                        <?php echo $admin['is_active'] ? 'Активен' : 'Заблокирован'; ?>
+                                    </span>
+                                </td>
+                                <td><?php echo date('d.m.Y H:i', strtotime($admin['created_at'])); ?></td>
+                                <td>
+                                    <?php if ($admin['id'] !== $currentUser['id']): ?>
+                                        <button class="btn-sm btn-secondary" onclick="openEditModal(<?php echo $admin['id']; ?>, '<?php echo htmlspecialchars($admin['username']); ?>')">Изменить</button>
+                                        <?php if ($isMainAdmin): ?>
+                                            <form method="POST" style="display: inline;" onsubmit="return confirm('Вы уверены?');">
+                                                <input type="hidden" name="action" value="delete_admin">
+                                                <input type="hidden" name="admin_id" value="<?php echo $admin['id']; ?>">
+                                                <button type="submit" class="btn-sm btn-danger">Удалить</button>
+                                            </form>
+                                        <?php endif; ?>
+                                    <?php else: ?>
+                                        <span style="color: #999;">Текущий пользователь</span>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
             </div>
             
-            <form method="POST">
-                <div class="settings-card">
-                    <h2>📋 Публичные таблицы</h2>
-                    
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <h3>Таблица участников</h3>
-                            <p>Показать сводную таблицу всех участников</p>
+            <!-- Создание нового администратора -->
+            <div class="card">
+                <h3>➕ Создать нового администратора</h3>
+                <form method="POST">
+                    <input type="hidden" name="action" value="create_admin">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="new_username">Логин *</label>
+                            <input type="text" id="new_username" name="username" required minlength="3" placeholder="Минимум 3 символа">
                         </div>
-                        <div class="setting-control">
-                            <label class="toggle-switch">
-                                <input type="checkbox" name="show_participants_table" value="1" <?php echo $showParticipants == '1' ? 'checked' : ''; ?>>
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <h3>Таблица победителей</h3>
-                            <p>Показать таблицу победителей</p>
-                        </div>
-                        <div class="setting-control">
-                            <label class="toggle-switch">
-                                <input type="checkbox" name="show_winners_table" value="1" <?php echo $showWinners == '1' ? 'checked' : ''; ?>>
-                                <span class="toggle-slider"></span>
-                            </label>
+                        <div class="form-group">
+                            <label for="new_password">Пароль *</label>
+                            <input type="password" id="new_password" name="password" required minlength="6" placeholder="Минимум 6 символов">
                         </div>
                     </div>
-                </div>
-                
-                <div class="settings-card">
-                    <h2>🖼️ Настройки галереи</h2>
-                    
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <h3>Показывать галерею</h3>
-                            <p>Скрыть или показать раздел галереи</p>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="new_email">Email</label>
+                            <input type="email" id="new_email" name="email" placeholder="example@mail.ru">
                         </div>
-                        <div class="setting-control">
-                            <label class="toggle-switch">
-                                <input type="checkbox" name="show_gallery" value="1" <?php echo $showGallery == '1' ? 'checked' : ''; ?>>
-                                <span class="toggle-slider"></span>
-                            </label>
+                        <div class="form-group">
+                            <label for="new_role">Роль *</label>
+                            <select id="new_role" name="role">
+                                <option value="regular">Обычный администратор</option>
+                                <option value="main">Главный администратор</option>
+                            </select>
                         </div>
                     </div>
-                </div>
-                
-                <div class="settings-card">
-                    <h2>📜 Сертификаты и дипломы</h2>
-                    
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <h3>Показывать сертификаты</h3>
-                            <p>Разрешить скачивание сертификатов</p>
-                        </div>
-                        <div class="setting-control">
-                            <label class="toggle-switch">
-                                <input type="checkbox" name="show_certificates" value="1" <?php echo $showCertificates == '1' ? 'checked' : ''; ?>>
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <h3>Показывать дипломы</h3>
-                            <p>Разрешить скачивание дипломов</p>
-                        </div>
-                        <div class="setting-control">
-                            <label class="toggle-switch">
-                                <input type="checkbox" name="show_diplomas" value="1" <?php echo $showDiplomas == '1' ? 'checked' : ''; ?>>
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                
-                <button type="submit" class="btn-save">Сохранить настройки</button>
-            </form>
+                    <button type="submit" class="btn-sm btn-primary">Создать администратора</button>
+                </form>
+            </div>
         </main>
     </div>
+    
+    <!-- Модальное окно редактирования -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Редактирование администратора</h3>
+                <span class="close" onclick="closeEditModal()">&times;</span>
+            </div>
+            <form method="POST" id="editForm">
+                <input type="hidden" name="admin_id" id="edit_admin_id">
+                
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>Текущий логин</label>
+                    <input type="text" id="edit_current_username" disabled>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="edit_new_username">Новый логин</label>
+                    <input type="text" id="edit_new_username" name="new_username" minlength="3" placeholder="Оставьте пустым, чтобы не менять">
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="edit_new_password">Новый пароль</label>
+                    <input type="password" id="edit_new_password" name="new_password" minlength="6" placeholder="Оставьте пустым, чтобы не менять">
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="edit_role">Роль</label>
+                    <select id="edit_role" name="role">
+                        <option value="regular">Обычный администратор</option>
+                        <option value="main">Главный администратор</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" name="action" value="change_username" class="btn-sm btn-primary">Изменить логин</button>
+                    <button type="submit" name="action" value="change_password" class="btn-sm btn-primary">Изменить пароль</button>
+                    <button type="submit" name="action" value="change_role" class="btn-sm btn-secondary">Изменить роль</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        function openEditModal(id, username) {
+            document.getElementById('edit_admin_id').value = id;
+            document.getElementById('edit_current_username').value = username;
+            document.getElementById('edit_new_username').value = '';
+            document.getElementById('edit_new_password').value = '';
+            document.getElementById('editModal').style.display = 'block';
+        }
+        
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+        
+        // Закрытие по клику вне модального окна
+        window.onclick = function(event) {
+            var modal = document.getElementById('editModal');
+            if (event.target == modal) {
+                closeEditModal();
+            }
+        }
+    </script>
 </body>
 </html>
