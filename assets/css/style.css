@@ -959,9 +959,7 @@ body {
 }
 
 .contacts-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--spacing-xl);
+    display: block;
 }
 
 .contacts-info {
@@ -969,6 +967,7 @@ body {
     padding: var(--spacing-lg);
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-sm);
+    width: 100%;
 }
 
 .contacts-info h2 {
@@ -1796,7 +1795,7 @@ input:focus + .toggle-slider {
     }
     
     .contacts-grid {
-        grid-template-columns: 1fr;
+        display: block;
     }
     
     .table-actions {
