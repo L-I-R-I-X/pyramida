@@ -1,26 +1,17 @@
 <?php
-// Учётные данные БД по умолчанию (localhost)
 $host = 'localhost';
 $dbname = 'pyramida_db';
 $username = 'root';
 $password = '';
 
-// Определяем константы БД СРАЗУ для использования в других файлах
 if (!defined('DB_HOST')) define('DB_HOST', $host);
 if (!defined('DB_NAME')) define('DB_NAME', $dbname);
 if (!defined('DB_USER')) define('DB_USER', $username);
 if (!defined('DB_PASS')) define('DB_PASS', $password);
 
-// ============================================================================
-// ФУНКЦИИ ДЛЯ СОЗДАНИЯ ДИРЕКТОРИЙ И БАЗЫ ДАННЫХ
-// ============================================================================
-
-/**
- * Создаёт необходимые директории проекта
- */
 function ensureDirectoriesExist() {
     $basePath = __DIR__ . '/..';
-    
+
     $requiredDirs = [
         $basePath . '/cache/',
         $basePath . '/cache/sessions/',
@@ -30,7 +21,7 @@ function ensureDirectoriesExist() {
         $basePath . '/uploads/gallery/',
         $basePath . '/logs/',
     ];
-    
+
     foreach ($requiredDirs as $dir) {
         if (!is_dir($dir)) {
             mkdir($dir, 0755, true);
@@ -38,35 +29,26 @@ function ensureDirectoriesExist() {
     }
 }
 
-/**
- * Подключение к MySQL серверу без выбора базы данных
- */
 function getDbConnectionWithoutDb() {
     global $host, $username, $password;
-    
+
     $dsn = "mysql:host=$host;charset=utf8mb4";
-    
+
     $options = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES => false,
     ];
-    
+
     return new PDO($dsn, $username, $password, $options);
 }
 
-/**
- * Создаёт базу данных, если она не существует
- */
 function ensureDatabaseExists() {
     global $dbname;
-    
+
     try {
         $pdo = getDbConnectionWithoutDb();
-        
-        // Создаём базу данных, если не существует
         $pdo->exec("CREATE DATABASE IF NOT EXISTS `$dbname` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-        
         return true;
     } catch (PDOException $e) {
         error_log('Database creation failed: ' . $e->getMessage());
@@ -74,14 +56,10 @@ function ensureDatabaseExists() {
     }
 }
 
-/**
- * Создаёт таблицу settings и заполняет начальными значениями по умолчанию (0)
- */
 function ensureSettingsTableExists() {
     global $pdo;
-    
+
     try {
-        // Создаём таблицу settings, если не существует
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS settings (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -92,48 +70,45 @@ function ensureSettingsTableExists() {
                 INDEX idx_setting_key (setting_key)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
-        
-        // Вставляем настройки по умолчанию со значением '0', если они ещё не существуют
+
         $defaultSettings = [
             'show_participants_table' => '0',
             'show_winners_table' => '0',
             'show_gallery' => '0',
             'show_certificates' => '0',
-            'show_diplomas' => '0'
+            'show_diplomas' => '0',
+            'gallery_sort_order' => 'date_desc',
         ];
-        
-        $stmt = $pdo->prepare("
-            INSERT IGNORE INTO settings (setting_key, setting_value) 
-            VALUES (:key, :value)
-        ");
-        
-        foreach ($defaultSettings as $key => $defaultValue) {
-            $stmt->execute(['key' => $key, 'value' => $defaultValue]);
+
+        foreach ($defaultSettings as $key => $value) {
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM settings WHERE setting_key = :key");
+            $stmt->execute(['key' => $key]);
+            if ($stmt->fetchColumn() == 0) {
+                $stmt = $pdo->prepare("INSERT INTO settings (setting_key, setting_value) VALUES (:key, :value)");
+                $stmt->execute(['key' => $key, 'value' => $value]);
+            }
         }
-        
+
         return true;
     } catch (PDOException $e) {
         error_log('Settings table creation failed: ' . $e->getMessage());
-        return false;
+        die('Ошибка создания таблицы настроек: ' . htmlspecialchars($e->getMessage()));
     }
 }
 
-/**
- * Создаёт таблицу applications для хранения заявок участников
- */
 function ensureApplicationsTableExists() {
     global $pdo;
-    
+
     try {
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS applications (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 fio VARCHAR(255) NOT NULL,
                 educational_institution VARCHAR(255) NOT NULL,
-                course VARCHAR(10) NOT NULL,
-                nomination VARCHAR(50) NOT NULL,
+                course INT NOT NULL,
+                nomination VARCHAR(100) NOT NULL,
                 section VARCHAR(100) NOT NULL,
-                work_title VARCHAR(255) NOT NULL,
+                work_title VARCHAR(255),
                 email VARCHAR(255) NOT NULL,
                 phone VARCHAR(50),
                 work_file VARCHAR(255) NOT NULL,
@@ -147,104 +122,62 @@ function ensureApplicationsTableExists() {
                 INDEX idx_created_at (created_at)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
-        
+
         return true;
     } catch (PDOException $e) {
         error_log('Applications table creation failed: ' . $e->getMessage());
-        return false;
+        die('Ошибка создания таблицы заявок: ' . htmlspecialchars($e->getMessage()));
     }
 }
 
-/**
- * Создаёт таблицу admin_users для администраторов
- */
-function ensureAdminUsersTableExists() {
+function ensureAdminTablesExist() {
     global $pdo;
-    
+
     try {
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS admin_users (
                 id INT AUTO_INCREMENT PRIMARY KEY,
-                username VARCHAR(50) UNIQUE NOT NULL,
+                username VARCHAR(100) UNIQUE NOT NULL,
                 password_hash VARCHAR(255) NOT NULL,
+                role ENUM('main', 'regular') DEFAULT 'regular',
+                is_active TINYINT(1) DEFAULT 1,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                last_login TIMESTAMP NULL,
-                INDEX idx_username (username)
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_username (username),
+                INDEX idx_role (role),
+                INDEX idx_is_active (is_active)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
-        
-        // Создаём администратора по умолчанию, если таблица пуста
-        $stmt = $pdo->query("SELECT COUNT(*) as count FROM admin_users");
-        $result = $stmt->fetch();
-        
-        if ($result['count'] == 0) {
-            $defaultPassword = password_hash('admin123', PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare("INSERT INTO admin_users (username, password_hash) VALUES (:username, :password)");
-            $stmt->execute(['username' => 'admin', 'password' => $defaultPassword]);
+
+        $stmt = $pdo->query("SELECT COUNT(*) FROM admin_users");
+        if ($stmt->fetchColumn() == 0) {
+            $passwordHash = password_hash('admin123', PASSWORD_DEFAULT);
+            $pdo->exec("INSERT INTO admin_users (username, password_hash, role, is_active) VALUES ('admin', '$passwordHash', 'main', 1)");
         }
-        
+
         return true;
     } catch (PDOException $e) {
-        error_log('Admin users table creation failed: ' . $e->getMessage());
-        return false;
+        error_log('Admin tables creation failed: ' . $e->getMessage());
+        die('Ошибка создания таблиц администратора: ' . htmlspecialchars($e->getMessage()));
     }
 }
 
-/**
- * Создаёт таблицу admin_sessions для сессий администраторов
- */
-function ensureAdminSessionsTableExists() {
-    global $pdo;
-    
-    try {
-        $pdo->exec("
-            CREATE TABLE IF NOT EXISTS admin_sessions (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                user_id INT NOT NULL,
-                session_token VARCHAR(255) NOT NULL,
-                expires_at TIMESTAMP NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                INDEX idx_session_token (session_token),
-                INDEX idx_user_id (user_id),
-                FOREIGN KEY (user_id) REFERENCES admin_users(id) ON DELETE CASCADE
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-        ");
-        
-        return true;
-    } catch (PDOException $e) {
-        error_log('Admin sessions table creation failed: ' . $e->getMessage());
-        return false;
-    }
-}
-
-// ============================================================================
-// ОСНОВНОЕ ПОДКЛЮЧЕНИЕ К БД
-// ============================================================================
-
-// Сначала создаём директории
 ensureDirectoriesExist();
-
-// Затем создаём БД, если её нет
 ensureDatabaseExists();
 
-// Теперь подключаемся к созданной/существующей БД
-$dsn = "mysql:host=$host;dbname=$dbname;charset=utf8mb4";
-
-$options = [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES => false,
-];
-
 try {
+    $dsn = "mysql:host=$host;dbname=$dbname;charset=utf8mb4";
+    $options = [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false,
+    ];
     $pdo = new PDO($dsn, $username, $password, $options);
-    
-    // Создаём таблицу settings с начальными значениями
+
     ensureSettingsTableExists();
-    
-    // Создаём таблицу applications для заявок участников
     ensureApplicationsTableExists();
-    
+    ensureAdminTablesExist();
+
 } catch (PDOException $e) {
     error_log('Database connection failed: ' . $e->getMessage());
     die('Ошибка подключения к базе данных: ' . htmlspecialchars($e->getMessage()));

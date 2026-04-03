@@ -3,12 +3,10 @@ require_once 'config.php';
 
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 
-// Значения по умолчанию - всё скрыто
 $showParticipants = '0';
 $showWinners = '0';
 $showGallery = '0';
 
-// Подключаем БД и функции только если они нужны для получения настроек
 if (file_exists(__DIR__ . '/db.php')) {
     try {
         require_once __DIR__ . '/db.php';
@@ -19,7 +17,6 @@ if (file_exists(__DIR__ . '/db.php')) {
             $showGallery = getSetting('show_gallery', '0');
         }
     } catch (Exception $e) {
-        // Если ошибка при подключении или получении настроек, используем значения по умолчанию (всё скрыто)
     }
 }
 ?>
