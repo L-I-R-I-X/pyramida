@@ -1,44 +1,26 @@
-```php
-# Environment and configuration files
-.env
-.env.local
-.env.*
+```
+# Compiled and build artifacts
+*.pyc
+__pycache__/
 
-# Logs and temporary files
-*.log
-*.tmp
-*.swp
-
-# Dependencies and build artifacts
+# Dependencies
 vendor/
-node_modules/
 composer.lock
 
-# IDE specific files
+# Logs and temp files
+*.log
+*.tmp
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# Editors
 .vscode/
 .idea/
-*.swp
-*.swo
 
-# OS specific files
+# OS specific
 .DS_Store
 Thumbs.db
-
-# Cache directories
-.cache/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-
-# Backup and compressed files
-*.bak
-*.zip
-*.gz
-*.tar
-*.tgz
-*.bz2
-*.xz
-*.7z
-*.rar
 ```

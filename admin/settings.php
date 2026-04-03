@@ -37,9 +37,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $showParticipants = getSetting('show_participants_table', '0');
 $showWinners = getSetting('show_winners_table', '0');
-$showGallery = getSetting('show_gallery', '1');
-$showCertificates = getSetting('show_certificates', '1');
-$showDiplomas = getSetting('show_diplomas', '1');
+$showGallery = getSetting('show_gallery', '0');
+$showCertificates = getSetting('show_certificates', '0');
+$showDiplomas = getSetting('show_diplomas', '0');
 
 try {
     $stmt = $pdo->query("SELECT COUNT(*) as total FROM applications");

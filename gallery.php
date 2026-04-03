@@ -8,7 +8,7 @@ require_once 'includes/db.php';
 
 require_once 'includes/functions.php';
 
-$showGallery = getSetting('show_gallery', '1');
+$showGallery = getSetting('show_gallery', '0');
 $gallerySortOrder = getSetting('gallery_sort_order', 'date_desc');
 
 if ($showGallery !== '1') {
