@@ -1302,6 +1302,25 @@ body {
     word-break: break-word;
 }
 
+.admin-role-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.admin-role-badge.main {
+    background: #FF6B00;
+    color: #FFFFFF;
+}
+
+.admin-role-badge.regular {
+    background: rgba(255, 255, 255, 0.2);
+    color: #FFFFFF;
+}
+
 .admin-sidebar nav {
     display: flex;
     flex-direction: column;
@@ -1516,6 +1535,43 @@ input:focus + .toggle-slider {
 
 .btn-save:hover {
     background: #E55E00;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+    margin-right: 5px;
+    transition: background 0.3s;
+}
+
+.btn-sm.btn-primary {
+    background: #FF6B00;
+    color: #FFFFFF;
+}
+
+.btn-sm.btn-primary:hover {
+    background: #E55E00;
+}
+
+.btn-sm.btn-secondary {
+    background: #6c757d;
+    color: #FFFFFF;
+}
+
+.btn-sm.btn-secondary:hover {
+    background: #5a6268;
+}
+
+.btn-sm.btn-danger {
+    background: #dc3545;
+    color: #FFFFFF;
+}
+
+.btn-sm.btn-danger:hover {
+    background: #c82333;
 }
 
 .btn-delete {
