@@ -474,10 +474,9 @@ function changePassword($userId, $newPassword) {
  * @param string $username
  * @param string $password
  * @param string $role
- * @param string $email
  * @return array ['success' => bool, 'message' => string, 'user_id' => int|null]
  */
-function createAdminUser($username, $password, $role = 'regular', $email = '') {
+function createAdminUser($username, $password, $role = 'regular') {
     global $pdo;
     
     if (empty($username) || strlen($username) < 3) {
@@ -488,9 +487,8 @@ function createAdminUser($username, $password, $role = 'regular', $email = '') {
         return ['success' => false, 'message' => 'Пароль должен быть не менее 6 символов', 'user_id' => null];
     }
     
-    if (!in_array($role, ['main', 'regular'])) {
-        $role = 'regular';
-    }
+    // Всегда создаём только обычных администраторов
+    $role = 'regular';
     
     try {
         // Проверяем, не занят ли логин
@@ -503,11 +501,10 @@ function createAdminUser($username, $password, $role = 'regular', $email = '') {
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
         $now = date('Y-m-d H:i:s');
         
-        $stmt = $pdo->prepare("INSERT INTO admin_users (username, password_hash, email, role, created_at, updated_at, is_active) VALUES (:username, :password, :email, :role, :created_at, :updated_at, 1)");
+        $stmt = $pdo->prepare("INSERT INTO admin_users (username, password_hash, role, created_at, updated_at, is_active) VALUES (:username, :password, :role, :created_at, :updated_at, 1)");
         $stmt->execute([
             'username' => $username,
             'password' => $passwordHash,
-            'email' => $email,
             'role' => $role,
             'created_at' => $now,
             'updated_at' => $now
@@ -600,7 +597,7 @@ function getAllAdmins() {
     global $pdo;
     
     try {
-        $stmt = $pdo->query("SELECT id, username, email, role, created_at, is_active FROM admin_users ORDER BY created_at DESC");
+        $stmt = $pdo->query("SELECT id, username, role, created_at, is_active FROM admin_users WHERE is_active = 1 ORDER BY created_at DESC");
         return $stmt->fetchAll();
     } catch (PDOException $e) {
         error_log('getAllAdmins error: ' . $e->getMessage());
