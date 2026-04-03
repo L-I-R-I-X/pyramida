@@ -437,6 +437,49 @@ function changeUsername($userId, $newUsername) {
 }
 
 /**
+ * Валидация сложности пароля
+ * @param string $password
+ * @return array ['valid' => bool, 'errors' => array]
+ */
+function validatePasswordStrength($password) {
+    $errors = [];
+    
+    if (empty($password)) {
+        return ['valid' => false, 'errors' => ['Пароль обязателен']];
+    }
+    
+    // Проверка длины (минимум 12 символов)
+    if (strlen($password) < 12) {
+        $errors[] = 'Минимум 12 символов';
+    }
+    
+    // Проверка наличия заглавных букв
+    if (!preg_match('/[A-ZА-ЯЁ]/u', $password)) {
+        $errors[] = 'Хотя бы одна заглавная буква';
+    }
+    
+    // Проверка наличия строчных букв
+    if (!preg_match('/[a-zа-яё]/u', $password)) {
+        $errors[] = 'Хотя бы одна строчная буква';
+    }
+    
+    // Проверка наличия цифр
+    if (!preg_match('/[0-9]/', $password)) {
+        $errors[] = 'Хотя бы одна цифра';
+    }
+    
+    // Проверка наличия спецсимволов
+    if (!preg_match('/[^A-Za-z0-9А-Яа-яЁё]/', $password)) {
+        $errors[] = 'Хотя бы один специальный символ';
+    }
+    
+    return [
+        'valid' => empty($errors),
+        'errors' => $errors
+    ];
+}
+
+/**
  * Изменение пароля пользователя
  * @param int $userId
  * @param string $newPassword
@@ -445,8 +488,10 @@ function changeUsername($userId, $newUsername) {
 function changePassword($userId, $newPassword) {
     global $pdo;
     
-    if (empty($newPassword) || strlen($newPassword) < 6) {
-        return ['success' => false, 'message' => 'Пароль должен быть не менее 6 символов'];
+    // Валидация сложности пароля
+    $validation = validatePasswordStrength($newPassword);
+    if (!$validation['valid']) {
+        return ['success' => false, 'message' => 'Требования к паролю не соблюдены: ' . implode(', ', $validation['errors'])];
     }
     
     try {
@@ -483,8 +528,10 @@ function createAdminUser($username, $password, $role = 'regular') {
         return ['success' => false, 'message' => 'Логин должен быть не менее 3 символов', 'user_id' => null];
     }
     
-    if (empty($password) || strlen($password) < 6) {
-        return ['success' => false, 'message' => 'Пароль должен быть не менее 6 символов', 'user_id' => null];
+    // Валидация сложности пароля
+    $validation = validatePasswordStrength($password);
+    if (!$validation['valid']) {
+        return ['success' => false, 'message' => 'Требования к паролю не соблюдены: ' . implode(', ', $validation['errors']), 'user_id' => null];
     }
     
     // Всегда создаём только обычных администраторов

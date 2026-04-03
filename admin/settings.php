@@ -196,7 +196,7 @@ $admins = getAllAdmins();
             <!-- Создание нового администратора -->
             <div class="card">
                 <h3>➕ Создать нового администратора</h3>
-                <form method="POST">
+                <form method="POST" id="createAdminForm">
                     <input type="hidden" name="action" value="create_admin">
                     <div class="form-row">
                         <div class="form-group">
@@ -205,7 +205,17 @@ $admins = getAllAdmins();
                         </div>
                         <div class="form-group">
                             <label for="new_password">Пароль *</label>
-                            <input type="password" id="new_password" name="password" required minlength="6" placeholder="Минимум 6 символов">
+                            <input type="password" id="new_password" name="password" required placeholder="Введите пароль">
+                            <div id="password_requirements" style="margin-top: 10px; padding: 10px; background: #F9F9F9; border-radius: 4px; font-size: 0.85rem;">
+                                <strong>Требования к паролю:</strong>
+                                <ul style="margin: 5px 0 0 20px; padding: 0;" id="requirements_list">
+                                    <li id="req_length" style="color: #666;">Минимум 12 символов</li>
+                                    <li id="req_uppercase" style="color: #666;">Хотя бы одна заглавная буква (A-Z, А-Я)</li>
+                                    <li id="req_lowercase" style="color: #666;">Хотя бы одна строчная буква (a-z, а-я)</li>
+                                    <li id="req_digit" style="color: #666;">Хотя бы одна цифра</li>
+                                    <li id="req_special" style="color: #666;">Хотя бы один специальный символ (!@#$%^&* и т.д.)</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                     <div class="form-row">
@@ -216,7 +226,7 @@ $admins = getAllAdmins();
                             </select>
                         </div>
                     </div>
-                    <button type="submit" class="btn-sm btn-primary">Создать администратора</button>
+                    <button type="submit" class="btn-sm btn-primary" id="submitCreateBtn" disabled>Создать администратора</button>
                 </form>
             </div>
         </main>
@@ -244,12 +254,22 @@ $admins = getAllAdmins();
                 
                 <div class="form-group" style="margin-bottom: 15px;">
                     <label for="edit_new_password">Новый пароль</label>
-                    <input type="password" id="edit_new_password" name="new_password" minlength="6" placeholder="Оставьте пустым, чтобы не менять">
+                    <input type="password" id="edit_new_password" name="new_password" placeholder="Оставьте пустым, чтобы не менять">
+                    <div id="edit_password_requirements" style="margin-top: 10px; padding: 10px; background: #F9F9F9; border-radius: 4px; font-size: 0.85rem; display: none;">
+                        <strong>Требования к паролю:</strong>
+                        <ul style="margin: 5px 0 0 20px; padding: 0;" id="edit_requirements_list">
+                            <li id="edit_req_length" style="color: #666;">Минимум 12 символов</li>
+                            <li id="edit_req_uppercase" style="color: #666;">Хотя бы одна заглавная буква (A-Z, А-Я)</li>
+                            <li id="edit_req_lowercase" style="color: #666;">Хотя бы одна строчная буква (a-z, а-я)</li>
+                            <li id="edit_req_digit" style="color: #666;">Хотя бы одна цифра</li>
+                            <li id="edit_req_special" style="color: #666;">Хотя бы один специальный символ (!@#$%^&* и т.д.)</li>
+                        </ul>
+                    </div>
                 </div>
                 
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
                     <button type="submit" name="action" value="change_username" class="btn-sm btn-primary">Изменить логин</button>
-                    <button type="submit" name="action" value="change_password" class="btn-sm btn-primary">Изменить пароль</button>
+                    <button type="submit" name="action" value="change_password" class="btn-sm btn-primary" id="editSubmitPasswordBtn" disabled>Изменить пароль</button>
                 </div>
             </form>
         </div>
@@ -261,6 +281,10 @@ $admins = getAllAdmins();
             document.getElementById('edit_current_username').value = username;
             document.getElementById('edit_new_username').value = '';
             document.getElementById('edit_new_password').value = '';
+            document.getElementById('edit_password_requirements').style.display = 'none';
+            document.getElementById('editSubmitPasswordBtn').disabled = true;
+            // Сброс стилей требований
+            resetEditRequirements();
             document.getElementById('editModal').style.display = 'block';
         }
         
@@ -274,6 +298,148 @@ $admins = getAllAdmins();
             if (event.target == modal) {
                 closeEditModal();
             }
+        }
+        
+        // Функция сброса стилей требований для модального окна
+        function resetEditRequirements() {
+            const reqLength = document.getElementById('edit_req_length');
+            const reqUppercase = document.getElementById('edit_req_uppercase');
+            const reqLowercase = document.getElementById('edit_req_lowercase');
+            const reqDigit = document.getElementById('edit_req_digit');
+            const reqSpecial = document.getElementById('edit_req_special');
+            
+            [reqLength, reqUppercase, reqLowercase, reqDigit, reqSpecial].forEach(el => {
+                if (el) {
+                    el.style.color = '#666';
+                    el.innerHTML = el.textContent.replace('✓ ', '');
+                }
+            });
+        }
+        
+        // Валидация пароля в реальном времени для формы создания администратора
+        const newPasswordInput = document.getElementById('new_password');
+        const submitCreateBtn = document.getElementById('submitCreateBtn');
+        
+        if (newPasswordInput && submitCreateBtn) {
+            const reqLength = document.getElementById('req_length');
+            const reqUppercase = document.getElementById('req_uppercase');
+            const reqLowercase = document.getElementById('req_lowercase');
+            const reqDigit = document.getElementById('req_digit');
+            const reqSpecial = document.getElementById('req_special');
+            
+            function validatePassword(password) {
+                const validation = {
+                    length: password.length >= 12,
+                    uppercase: /[A-ZА-ЯЁ]/u.test(password),
+                    lowercase: /[a-zа-яё]/u.test(password),
+                    digit: /[0-9]/.test(password),
+                    special: /[^A-Za-z0-9А-Яа-яЁё]/.test(password)
+                };
+                
+                // Обновляем визуальное состояние требований
+                updateRequirement(reqLength, validation.length);
+                updateRequirement(reqUppercase, validation.uppercase);
+                updateRequirement(reqLowercase, validation.lowercase);
+                updateRequirement(reqDigit, validation.digit);
+                updateRequirement(reqSpecial, validation.special);
+                
+                return Object.values(validation).every(v => v);
+            }
+            
+            function updateRequirement(element, isValid) {
+                if (!element) return;
+                if (isValid) {
+                    element.style.color = '#4CAF50';
+                    element.innerHTML = '✓ ' + element.textContent.replace('✓ ', '');
+                } else {
+                    element.style.color = '#666';
+                    element.innerHTML = element.textContent.replace('✓ ', '');
+                }
+            }
+            
+            newPasswordInput.addEventListener('input', function() {
+                const isPasswordValid = validatePassword(newPasswordInput.value);
+                submitCreateBtn.disabled = !isPasswordValid;
+            });
+            
+            // Предотвращаем отправку формы если пароль не валиден
+            document.getElementById('createAdminForm').addEventListener('submit', function(e) {
+                const password = newPasswordInput.value;
+                if (!validatePassword(password)) {
+                    e.preventDefault();
+                    alert('Пароль не соответствует требованиям безопасности');
+                }
+            });
+        }
+        
+        // Валидация пароля в модальном окне редактирования
+        const editPasswordInput = document.getElementById('edit_new_password');
+        const editSubmitPasswordBtn = document.getElementById('editSubmitPasswordBtn');
+        const editPasswordRequirements = document.getElementById('edit_password_requirements');
+        
+        if (editPasswordInput && editSubmitPasswordBtn) {
+            const editReqLength = document.getElementById('edit_req_length');
+            const editReqUppercase = document.getElementById('edit_req_uppercase');
+            const editReqLowercase = document.getElementById('edit_req_lowercase');
+            const editReqDigit = document.getElementById('edit_req_digit');
+            const editReqSpecial = document.getElementById('edit_req_special');
+            
+            function validateEditPassword(password) {
+                // Если поле пустое - показываем кнопку активной (пароль менять не обязательно)
+                if (!password || password.trim() === '') {
+                    editPasswordRequirements.style.display = 'none';
+                    editSubmitPasswordBtn.disabled = false;
+                    return true;
+                }
+                
+                // Показываем требования только если начали вводить пароль
+                editPasswordRequirements.style.display = 'block';
+                
+                const validation = {
+                    length: password.length >= 12,
+                    uppercase: /[A-ZА-ЯЁ]/u.test(password),
+                    lowercase: /[a-zа-яё]/u.test(password),
+                    digit: /[0-9]/.test(password),
+                    special: /[^A-Za-z0-9А-Яа-яЁё]/.test(password)
+                };
+                
+                // Обновляем визуальное состояние требований
+                updateEditRequirement(editReqLength, validation.length);
+                updateEditRequirement(editReqUppercase, validation.uppercase);
+                updateEditRequirement(editReqLowercase, validation.lowercase);
+                updateEditRequirement(editReqDigit, validation.digit);
+                updateEditRequirement(editReqSpecial, validation.special);
+                
+                return Object.values(validation).every(v => v);
+            }
+            
+            function updateEditRequirement(element, isValid) {
+                if (!element) return;
+                if (isValid) {
+                    element.style.color = '#4CAF50';
+                    element.innerHTML = '✓ ' + element.textContent.replace('✓ ', '');
+                } else {
+                    element.style.color = '#666';
+                    element.innerHTML = element.textContent.replace('✓ ', '');
+                }
+            }
+            
+            editPasswordInput.addEventListener('input', function() {
+                const isPasswordValid = validateEditPassword(editPasswordInput.value);
+                editSubmitPasswordBtn.disabled = !isPasswordValid;
+            });
+            
+            // Предотвращаем отправку формы если пароль не валиден
+            document.getElementById('editForm').addEventListener('submit', function(e) {
+                const action = this.querySelector('button[name="action"]:focus')?.value;
+                if (action === 'change_password' && editPasswordInput.value.trim() !== '') {
+                    const password = editPasswordInput.value;
+                    if (!validateEditPassword(password)) {
+                        e.preventDefault();
+                        alert('Пароль не соответствует требованиям безопасности');
+                    }
+                }
+            });
         }
     </script>
 </body>
