@@ -54,14 +54,9 @@
                         <div class="timeline-desc">Подача работ и заявок участников</div>
                     </div>
                     <div class="timeline-item">
-                        <div class="timeline-date">19–21 мая</div>
-                        <div class="timeline-title">Обработка</div>
-                        <div class="timeline-desc">Формирование списков участников</div>
-                    </div>
-                    <div class="timeline-item">
-                        <div class="timeline-date">21–25 мая</div>
-                        <div class="timeline-title">Оценка жюри</div>
-                        <div class="timeline-desc">Работа экспертного жюри</div>
+                        <div class="timeline-date">18–25 мая</div>
+                        <div class="timeline-title">Работа жюри</div>
+                        <div class="timeline-desc">Оценка работ экспертным жюри</div>
                     </div>
                     <div class="timeline-item">
                         <div class="timeline-date">25–31 мая</div>
