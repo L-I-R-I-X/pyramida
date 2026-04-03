@@ -1288,6 +1288,12 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.admin-user-info:hover {
+    background: rgba(255, 255, 255, 0.15);
 }
 
 .admin-user-icon {

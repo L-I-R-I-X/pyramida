@@ -24,6 +24,12 @@ if (!$isMainAdmin) {
 $message = '';
 $messageType = '';
 
+// Обработка сообщений из URL
+if (isset($_GET['msg'])) {
+    $message = $_GET['msg'];
+    $messageType = 'success';
+}
+
 // Обработка действий
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
@@ -31,10 +37,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'create_admin') {
         $username = trim($_POST['username'] ?? '');
         $password = $_POST['password'] ?? '';
-        $role = $_POST['role'] ?? 'regular';
-        $email = trim($_POST['email'] ?? '');
         
-        $result = createAdminUser($username, $password, $role, $email);
+        $result = createAdminUser($username, $password);
         $message = $result['message'];
         $messageType = $result['success'] ? 'success' : 'error';
         
@@ -42,17 +46,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $adminId = (int)($_POST['admin_id'] ?? 0);
         if ($adminId > 0 && $adminId !== $currentUser['id']) {
             $result = deleteAdminUser($adminId);
-            $message = $result['message'];
-            $messageType = $result['success'] ? 'success' : 'error';
+            if ($result['success']) {
+                // Перезагружаем страницу после успешного удаления
+                header('Location: settings.php?msg=' . urlencode($result['message']));
+                exit;
+            } else {
+                $message = $result['message'];
+                $messageType = 'error';
+            }
         }
         
     } elseif ($action === 'change_role') {
         $adminId = (int)($_POST['admin_id'] ?? 0);
         $newRole = $_POST['role'] ?? 'regular';
-        if ($adminId > 0 && $adminId !== $currentUser['id']) {
-            $result = changeAdminRole($adminId, $newRole);
-            $message = $result['message'];
-            $messageType = $result['success'] ? 'success' : 'error';
+        // Только главный администратор может менять роли и только на regular
+        if ($isMainAdmin && $adminId > 0 && $adminId !== $currentUser['id']) {
+            // Нельзя понизить роль главного администратора
+            $targetUser = getUserById($adminId);
+            if ($targetUser && $targetUser['role'] === 'main') {
+                $message = 'Нельзя изменить роль главного администратора';
+                $messageType = 'error';
+            } else {
+                $result = changeAdminRole($adminId, 'regular');
+                $message = $result['message'];
+                $messageType = $result['success'] ? 'success' : 'error';
+            }
         }
         
     } elseif ($action === 'change_username') {
@@ -133,7 +151,6 @@ $admins = getAllAdmins();
                         <tr>
                             <th>ID</th>
                             <th>Логин</th>
-                            <th>Email</th>
                             <th>Роль</th>
                             <th>Статус</th>
                             <th>Дата создания</th>
@@ -145,7 +162,6 @@ $admins = getAllAdmins();
                             <tr>
                                 <td><?php echo $admin['id']; ?></td>
                                 <td><?php echo htmlspecialchars($admin['username']); ?></td>
-                                <td><?php echo htmlspecialchars($admin['email'] ?: '—'); ?></td>
                                 <td>
                                     <span class="role-badge <?php echo $admin['role']; ?>">
                                         <?php echo $admin['role'] === 'main' ? 'Главный' : 'Обычный'; ?>
@@ -194,14 +210,9 @@ $admins = getAllAdmins();
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="new_email">Email</label>
-                            <input type="email" id="new_email" name="email" placeholder="example@mail.ru">
-                        </div>
-                        <div class="form-group">
                             <label for="new_role">Роль *</label>
                             <select id="new_role" name="role">
                                 <option value="regular">Обычный администратор</option>
-                                <option value="main">Главный администратор</option>
                             </select>
                         </div>
                     </div>
@@ -236,18 +247,9 @@ $admins = getAllAdmins();
                     <input type="password" id="edit_new_password" name="new_password" minlength="6" placeholder="Оставьте пустым, чтобы не менять">
                 </div>
                 
-                <div class="form-group" style="margin-bottom: 15px;">
-                    <label for="edit_role">Роль</label>
-                    <select id="edit_role" name="role">
-                        <option value="regular">Обычный администратор</option>
-                        <option value="main">Главный администратор</option>
-                    </select>
-                </div>
-                
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
                     <button type="submit" name="action" value="change_username" class="btn-sm btn-primary">Изменить логин</button>
                     <button type="submit" name="action" value="change_password" class="btn-sm btn-primary">Изменить пароль</button>
-                    <button type="submit" name="action" value="change_role" class="btn-sm btn-secondary">Изменить роль</button>
                 </div>
             </form>
         </div>
