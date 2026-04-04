@@ -12,9 +12,19 @@ if (!$currentUser) {
 // Получаем полную информацию о пользователе включая роль
 $fullUserInfo = getUserById($currentUser['id']);
 $isMainAdmin = $fullUserInfo && $fullUserInfo['role'] === 'main';
+
+// Определяем текущую страницу для подсветки активного пункта
+$currentPage = basename($_SERVER['PHP_SELF']);
+// Для модерации подсвечиваем "Заявки"
+$isModerationPage = $currentPage === 'moderation.php';
+$highlightApplications = $currentPage === 'applications.php' || $isModerationPage;
 ?>
 <aside class="admin-sidebar">
     <h2>🏛️ Пирамида</h2>
+    
+    <a href="<?php echo BASE_URL; ?>" target="_blank" class="<?php echo $currentPage === 'index.php' ? 'active' : ''; ?>">На сайт</a>
+    
+    <div class="sidebar-divider-white"></div>
     
     <div class="admin-user-info" style="cursor: pointer;" onclick="window.location.href='profile.php'">
         <span class="admin-user-icon">👤</span>
@@ -26,17 +36,21 @@ $isMainAdmin = $fullUserInfo && $fullUserInfo['role'] === 'main';
         <?php endif; ?>
     </div>
     
+    <a href="profile.php" class="<?php echo $currentPage === 'profile.php' ? 'active' : ''; ?>">Мой аккаунт</a>
+    
+    <div class="sidebar-divider-gray"></div>
+    
     <nav>
-        <a href="applications.php" class="<?php echo basename($_SERVER['PHP_SELF']) === 'applications.php' ? 'active' : ''; ?>">Заявки</a>
-        <a href="moderation.php" class="<?php echo basename($_SERVER['PHP_SELF']) === 'moderation.php' ? 'active' : ''; ?>">Модерация</a>
-        <a href="export.php" class="<?php echo basename($_SERVER['PHP_SELF']) === 'export.php' ? 'active' : ''; ?>">Экспорт данных</a>
-        <a href="profile.php" class="<?php echo basename($_SERVER['PHP_SELF']) === 'profile.php' ? 'active' : ''; ?>">Мой аккаунт</a>
-        <a href="site-settings.php" class="<?php echo basename($_SERVER['PHP_SELF']) === 'site-settings.php' ? 'active' : ''; ?>">Настройки сайта</a>
-        <?php if ($isMainAdmin): ?>
-            <a href="settings.php" class="<?php echo basename($_SERVER['PHP_SELF']) === 'settings.php' ? 'active' : ''; ?>">Администраторы</a>
-        <?php endif; ?>
+        <a href="applications.php" class="<?php echo $highlightApplications ? 'active' : ''; ?>">Заявки</a>
+        <a href="export.php" class="<?php echo $currentPage === 'export.php' ? 'active' : ''; ?>">Экспорт данных</a>
+        <a href="site-settings.php" class="<?php echo $currentPage === 'site-settings.php' ? 'active' : ''; ?>">Настройки сайта</a>
         
-        <a href="<?php echo BASE_URL; ?>" target="_blank">На сайт</a>
-        <a href="logout.php" style="margin-top: 20px; border-top: 1px solid #E0E0E0; padding-top: 15px;">Выход</a>
+        <?php if ($isMainAdmin): ?>
+            <a href="settings.php" class="<?php echo $currentPage === 'settings.php' ? 'active' : ''; ?>">Администраторы</a>
+        <?php endif; ?>
     </nav>
+    
+    <div class="sidebar-divider-gray"></div>
+    
+    <a href="logout.php">Выход</a>
 </aside>
