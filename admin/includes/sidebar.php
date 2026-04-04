@@ -38,7 +38,7 @@ $highlightApplications = $currentPage === 'applications.php' || $isModerationPag
     
     <a href="profile.php" class="<?php echo $currentPage === 'profile.php' ? 'active' : ''; ?>">Мой аккаунт</a>
     
-    <div class="sidebar-divider-gray"></div>
+    <div class="sidebar-divider-white"></div>
     
     <a href="applications.php" class="<?php echo $highlightApplications ? 'active' : ''; ?>">Заявки</a>
     <a href="export.php" class="<?php echo $currentPage === 'export.php' ? 'active' : ''; ?>">Экспорт данных</a>
@@ -48,7 +48,7 @@ $highlightApplications = $currentPage === 'applications.php' || $isModerationPag
         <a href="settings.php" class="<?php echo $currentPage === 'settings.php' ? 'active' : ''; ?>">Администраторы</a>
     <?php endif; ?>
     
-    <div class="sidebar-divider-gray"></div>
+    <div class="sidebar-divider-white"></div>
     
     <a href="logout.php">Выход</a>
 </aside>
