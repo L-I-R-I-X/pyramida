@@ -40,15 +40,13 @@ $highlightApplications = $currentPage === 'applications.php' || $isModerationPag
     
     <div class="sidebar-divider-gray"></div>
     
-    <nav>
-        <a href="applications.php" class="<?php echo $highlightApplications ? 'active' : ''; ?>">Заявки</a>
-        <a href="export.php" class="<?php echo $currentPage === 'export.php' ? 'active' : ''; ?>">Экспорт данных</a>
-        <a href="site-settings.php" class="<?php echo $currentPage === 'site-settings.php' ? 'active' : ''; ?>">Настройки сайта</a>
-        
-        <?php if ($isMainAdmin): ?>
-            <a href="settings.php" class="<?php echo $currentPage === 'settings.php' ? 'active' : ''; ?>">Администраторы</a>
-        <?php endif; ?>
-    </nav>
+    <a href="applications.php" class="<?php echo $highlightApplications ? 'active' : ''; ?>">Заявки</a>
+    <a href="export.php" class="<?php echo $currentPage === 'export.php' ? 'active' : ''; ?>">Экспорт данных</a>
+    <a href="site-settings.php" class="<?php echo $currentPage === 'site-settings.php' ? 'active' : ''; ?>">Настройки сайта</a>
+    
+    <?php if ($isMainAdmin): ?>
+        <a href="settings.php" class="<?php echo $currentPage === 'settings.php' ? 'active' : ''; ?>">Администраторы</a>
+    <?php endif; ?>
     
     <div class="sidebar-divider-gray"></div>
     
