@@ -1336,7 +1336,19 @@ body {
 .admin-sidebar nav {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 5px;
+}
+
+.admin-sidebar > a {
+    color: #FFFFFF;
+    text-decoration: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    transition: background 0.3s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
 }
 
 .admin-sidebar a {
@@ -1353,6 +1365,17 @@ body {
 .admin-sidebar a:hover,
 .admin-sidebar a.active {
     background: #FF6B00;
+}
+
+/* Разделители в боковом меню */
+.sidebar-divider-gray {
+    border-bottom: 1px solid #E0E0E0;
+    margin: 8px 0;
+}
+
+.sidebar-divider-white {
+    border-bottom: 3px solid #FFFFFF;
+    margin: 12px 0;
 }
 
 .admin-content {
@@ -1969,7 +1992,7 @@ input:focus + .toggle-slider {
 .admin-sidebar nav {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 5px;
 }
 .admin-sidebar a {
     color: #FFFFFF;
@@ -1981,6 +2004,16 @@ input:focus + .toggle-slider {
 .admin-sidebar a:hover,
 .admin-sidebar a.active {
     background: #FF6B00;
+}
+/* Разделители в боковом меню (mobile) */
+.sidebar-divider-gray {
+    border-bottom: 1px solid #E0E0E0;
+    margin: 8px 0;
+}
+
+.sidebar-divider-white {
+    border-bottom: 3px solid #FFFFFF;
+    margin: 12px 0;
 }
 .admin-content {
     flex: 1;
