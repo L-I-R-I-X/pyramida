@@ -1369,7 +1369,7 @@ body {
 
 /* Разделители в боковом меню */
 .sidebar-divider-gray {
-    border-bottom: 1px solid #E0E0E0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
     margin: 8px 0;
 }
 
@@ -2007,7 +2007,7 @@ input:focus + .toggle-slider {
 }
 /* Разделители в боковом меню (mobile) */
 .sidebar-divider-gray {
-    border-bottom: 1px solid #E0E0E0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
     margin: 8px 0;
 }
 
