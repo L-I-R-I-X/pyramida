@@ -1,1 +1,10 @@
-Nothing should be ignored based on the provided file changes. The modified files ('includes/config.php', 'includes/db.php') are PHP source code files that should not be added to .gitignore.
+```
+# Web server
+.htaccess
+
+# Uploads directory
+uploads/
+
+# Logs
+logs/
+```

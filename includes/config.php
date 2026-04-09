@@ -5,8 +5,14 @@ define('SITE_URL', BASE_URL);
 
 $basePath = __DIR__ . '/..';
 
-define('UPLOAD_DIR_ORIGINALS', $basePath . '/cache/uploads/originals/');
-define('UPLOAD_DIR_GALLERY', $basePath . '/cache/uploads/gallery/');
+// Пути для загрузки файлов работ участников
+// На боевом сервере используйте абсолютные пути или пути относительно корня сайта
+define('UPLOAD_DIR_ORIGINALS', $basePath . '/uploads/originals/');
+define('UPLOAD_DIR_GALLERY', $basePath . '/uploads/gallery/');
+
+// URL для доступа к файлам
+define('UPLOAD_URL_ORIGINALS', SITE_URL . 'uploads/originals/');
+define('UPLOAD_URL_GALLERY', SITE_URL . 'uploads/gallery/');
 
 define('CACHE_DIR', $basePath . '/cache/');
 define('CACHE_CERTIFICATES_DIR', CACHE_DIR . 'certificates/');
