@@ -61,6 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Получаем полную информацию о пользователе
 $fullUserInfo = getUserById($currentUser['id']);
+$isMainAdmin = $fullUserInfo && $fullUserInfo['role'] === 'main';
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -105,6 +106,16 @@ $fullUserInfo = getUserById($currentUser['id']);
                     <div class="user-info-item">
                         <div class="user-info-label">Логин</div>
                         <div class="user-info-value"><?php echo htmlspecialchars($currentUser['username']); ?></div>
+                    </div>
+                    <div class="user-info-item">
+                        <div class="user-info-label">Роль</div>
+                        <div class="user-info-value">
+                            <?php if ($isMainAdmin): ?>
+                                <span style="display: inline-block; padding: 4px 12px; background: #FF6B00; color: #FFFFFF; border-radius: 20px; font-size: 0.85rem;">Главный администратор</span>
+                            <?php else: ?>
+                                <span style="display: inline-block; padding: 4px 12px; background: #E0E0E0; color: #666666; border-radius: 20px; font-size: 0.85rem;">Администратор</span>
+                            <?php endif; ?>
+                        </div>
                     </div>
                     <div class="user-info-item">
                         <div class="user-info-label">Дата регистрации</div>

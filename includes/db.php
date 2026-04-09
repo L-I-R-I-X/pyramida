@@ -139,10 +139,12 @@ function ensureAdminTablesExist() {
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 username VARCHAR(100) UNIQUE NOT NULL,
                 password_hash VARCHAR(255) NOT NULL,
+                role ENUM('main', 'regular') DEFAULT 'regular',
                 is_active TINYINT(1) DEFAULT 1,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 INDEX idx_username (username),
+                INDEX idx_role (role),
                 INDEX idx_is_active (is_active)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
@@ -150,7 +152,7 @@ function ensureAdminTablesExist() {
         $stmt = $pdo->query("SELECT COUNT(*) FROM admin_users");
         if ($stmt->fetchColumn() == 0) {
             $passwordHash = password_hash('admin123', PASSWORD_DEFAULT);
-            $pdo->exec("INSERT INTO admin_users (username, password_hash, is_active) VALUES ('admin', '$passwordHash', 1)");
+            $pdo->exec("INSERT INTO admin_users (username, password_hash, role, is_active) VALUES ('admin', '$passwordHash', 'main', 1)");
         }
 
         return true;
