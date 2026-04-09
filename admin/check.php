@@ -1,10 +1,7 @@
 <?php
-/**
- * Тестовый файл для отладки процесса авторизации в админ-панели
- * Выводит все этапы: ввод логина-пароля, проверку БД, создание сессии и т.д.
- */
 
-// Отключаем буферизацию вывода для немедленного отображения
+
+
 ob_implicit_flush(true);
 ob_end_flush();
 
@@ -163,15 +160,15 @@ ob_end_flush();
 
 <?php
 
-// =====================================================
-// ЭТАП 0: Инициализация и загрузка зависимостей
-// =====================================================
+
+
+
 echo '<div class="step info">';
 echo '<h2>📋 Этап 0: Инициализация</h2>';
 
 $testResults = [];
 
-// Проверка существования файлов
+
 $configFile = __DIR__ . '/../includes/config.php';
 $dbFile = __DIR__ . '/../includes/db.php';
 $authFile = __DIR__ . '/../includes/auth.php';
@@ -209,7 +206,7 @@ if (file_exists($authFile)) {
 }
 echo '</div>';
 
-// Подключаем файлы
+
 try {
     require_once $configFile;
     echo '<div class="form-group"><span class="label">Подключение config.php:</span> <span class="value"><span class="check-mark">✓</span> Успешно</span></div>';
@@ -239,9 +236,9 @@ try {
 
 echo '</div>';
 
-// =====================================================
-// ЭТАП 1: Проверка директории сессий
-// =====================================================
+
+
+
 echo '<div class="step">';
 echo '<h2>📁 Этап 1: Проверка директории сессий</h2>';
 
@@ -269,7 +266,7 @@ if (defined('SESSION_DIR')) {
     }
     echo '</div>';
     
-    // Пробуем создать тестовый файл
+    
     ensureSessionDirExists();
     $testToken = 'test_' . time();
     $testFile = getSessionFile($testToken);
@@ -281,7 +278,7 @@ if (defined('SESSION_DIR')) {
         $writeResult = file_put_contents($testFile, json_encode($testData));
         if ($writeResult !== false) {
             echo '<span class="value"><span class="check-mark">✓</span> Успешно записано ' . $writeResult . ' байт</span>';
-            // Удаляем тестовый файл
+            
             unlink($testFile);
             echo '<br><span class="value">Тестовый файл удалён</span>';
         } else {
@@ -295,9 +292,9 @@ if (defined('SESSION_DIR')) {
 
 echo '</div>';
 
-// =====================================================
-// ЭТАП 2: Проверка подключения к БД
-// =====================================================
+
+
+
 echo '<div class="step">';
 echo '<h2>🗄️ Этап 2: Проверка подключения к базе данных</h2>';
 
@@ -310,7 +307,7 @@ if (isset($pdo) && $pdo instanceof PDO) {
         $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
         echo '<div class="form-group"><span class="label">Драйвер БД:</span> <span class="value">' . htmlspecialchars($pdo->getAttribute(PDO::ATTR_DRIVER_NAME)) . '</span></div>';
         
-        // Проверяем таблицу admin_users
+        
         $stmt = $pdo->query("SHOW TABLES LIKE 'admin_users'");
         $tableExists = $stmt->rowCount() > 0;
         
@@ -324,7 +321,7 @@ if (isset($pdo) && $pdo instanceof PDO) {
         echo '</div>';
         
         if ($tableExists) {
-            // Проверяем структуру таблицы
+            
             $stmt = $pdo->query("DESCRIBE admin_users");
             $columns = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
@@ -340,7 +337,7 @@ if (isset($pdo) && $pdo instanceof PDO) {
             }
             echo '</table>';
             
-            // Считаем пользователей
+            
             $stmt = $pdo->query("SELECT COUNT(*) FROM admin_users");
             $userCount = $stmt->fetchColumn();
             echo '<div class="form-group"><span class="label">Всего пользователей:</span> <span class="value">' . $userCount . '</span></div>';
@@ -355,9 +352,9 @@ if (isset($pdo) && $pdo instanceof PDO) {
 
 echo '</div>';
 
-// =====================================================
-// ЭТАП 3: Проверка существующих пользователей
-// =====================================================
+
+
+
 echo '<div class="step">';
 echo '<h2>👤 Этап 3: Существующие пользователи</h2>';
 
@@ -390,7 +387,7 @@ if (isset($pdo) && $tableExists) {
             echo '<span class="warning-text">⚠️ Таблица пуста! Необходимо создать пользователя.</span>';
             echo '</div>';
             
-            // Предлагаем создать пользователя по умолчанию
+            
             if (function_exists('createDefaultUser')) {
                 echo '<div class="form-group">';
                 echo '<span class="label">Создание пользователя по умолчанию:</span> ';
@@ -412,9 +409,9 @@ if (isset($pdo) && $tableExists) {
 
 echo '</div>';
 
-// =====================================================
-// ЭТАП 4: Форма тестирования входа
-// =====================================================
+
+
+
 echo '<div class="step">';
 echo '<h2>🔐 Этап 4: Тестирование входа</h2>';
 
@@ -453,7 +450,7 @@ if ($formSubmitted) {
     echo '<span class="label">Введённый пароль:</span> <span class="value">' . str_repeat('*', strlen($password)) . ' (' . strlen($password) . ' симв.)</span>';
     echo '</div>';
     
-    // Этап 4.1: Проверка входных данных
+    
     echo '<div class="step">';
     echo '<h4>4.1. Проверка входных данных</h4>';
     
@@ -471,7 +468,7 @@ if ($formSubmitted) {
     
     echo '</div>';
     
-    // Этап 4.2: Поиск пользователя в БД
+    
     echo '<div class="step">';
     echo '<h4>4.2. Поиск пользователя в базе данных</h4>';
     
@@ -492,7 +489,7 @@ if ($formSubmitted) {
                     echo '<div class="form-group error"><span class="error-text"><span class="cross-mark">✗</span> Пользователь заблокирован</span></div>';
                 }
                 
-                // Этап 4.3: Проверка пароля
+                
                 echo '<div class="step">';
                 echo '<h4>4.3. Проверка пароля</h4>';
                 
@@ -518,14 +515,14 @@ if ($formSubmitted) {
                 }
                 echo '</div>';
                 
-                echo '</div>'; // конец 4.3
+                echo '</div>'; 
                 
-                // Этап 4.4: Создание сессии
+                
                 if ($passwordValid && $user['is_active']) {
                     echo '<div class="step">';
                     echo '<h4>4.4. Создание сессии</h4>';
                     
-                    // Вызываем функцию authenticate
+                    
                     $authResult = authenticate($username, $password);
                     
                     echo '<div class="form-group">';
@@ -539,7 +536,7 @@ if ($formSubmitted) {
                         echo '<div class="form-group success"><span class="value"><span class="check-mark">✓</span> Сессия успешно создана</span></div>';
                         echo '<div class="form-group"><span class="label">Токен сессии:</span> <span class="value">' . htmlspecialchars($authResult['token'] ?? 'не получен') . '</span></div>';
                         
-                        // Проверяем cookie
+                        
                         echo '<div class="step">';
                         echo '<h4>4.5. Проверка cookie</h4>';
                         
@@ -558,9 +555,9 @@ if ($formSubmitted) {
                         }
                         echo '</div>';
                         
-                        echo '</div>'; // конец 4.5
+                        echo '</div>'; 
                         
-                        // Проверяем файл сессии
+                        
                         if (isset($authResult['token'])) {
                             echo '<div class="step">';
                             echo '<h4>4.6. Проверка файла сессии</h4>';
@@ -586,10 +583,10 @@ if ($formSubmitted) {
                             }
                             echo '</div>';
                             
-                            echo '</div>'; // конец 4.6
+                            echo '</div>'; 
                         }
                         
-                        // Финальный результат
+                        
                         echo '<div class="step success">';
                         echo '<h3>✅ АВТОРИЗАЦИЯ УСПЕШНА!</h3>';
                         echo '<p>Теперь вы можете перейти в <a href="' . BASE_URL . 'admin/applications.php" class="value">админ-панель</a></p>';
@@ -602,7 +599,7 @@ if ($formSubmitted) {
                         echo '</div>';
                     }
                     
-                    echo '</div>'; // конец 4.4
+                    echo '</div>'; 
                 }
                 
             } else {
@@ -622,16 +619,16 @@ if ($formSubmitted) {
         echo '<div class="form-group error"><span class="error-text">Нет подключения к базе данных</span></div>';
     }
     
-    echo '</div>'; // конец 4.2
+    echo '</div>'; 
     
-    echo '</div>'; // конец результатов тестирования
+    echo '</div>'; 
 }
 
 echo '</div>';
 
-// =====================================================
-// ЭТАП 5: Текущее состояние авторизации
-// =====================================================
+
+
+
 echo '<div class="step">';
 echo '<h2>📝 Этап 5: Текущее состояние авторизации</h2>';
 
@@ -656,7 +653,7 @@ if (isset($_COOKIE[SESSION_COOKIE_NAME])) {
         print_r($currentSession);
         echo '</pre>';
         
-        // Проверяем срок действия
+        
         echo '<div class="form-group">';
         echo '<span class="label">Срок действия:</span> ';
         if (isset($currentSession['expires_at'])) {
@@ -677,7 +674,7 @@ if (isset($_COOKIE[SESSION_COOKIE_NAME])) {
     echo '</div>';
 }
 
-// Проверяем через checkAuth()
+
 $currentUser = checkAuth();
 
 echo '<div class="form-group">';
@@ -694,9 +691,9 @@ echo '</div>';
 
 echo '</div>';
 
-// =====================================================
-// ЭТАП 6: Информация о системе
-// =====================================================
+
+
+
 echo '<div class="step">';
 echo '<h2>ℹ️ Этап 6: Информация о системе</h2>';
 

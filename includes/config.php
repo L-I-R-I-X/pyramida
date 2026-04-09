@@ -1,16 +1,13 @@
 <?php
 
-define('BASE_URL', 'http://pyramida.sibadi.org/');
+define('BASE_URL', 'http:
 define('SITE_URL', BASE_URL);
 
 $basePath = __DIR__ . '/..';
 
-// Пути для загрузки файлов работ участников
-// На боевом сервере используйте абсолютные пути или пути относительно корня сайта
 define('UPLOAD_DIR_ORIGINALS', $basePath . '/uploads/originals/');
 define('UPLOAD_DIR_GALLERY', $basePath . '/uploads/gallery/');
 
-// URL для доступа к файлам
 define('UPLOAD_URL_ORIGINALS', SITE_URL . 'uploads/originals/');
 define('UPLOAD_URL_GALLERY', SITE_URL . 'uploads/gallery/');
 
@@ -27,5 +24,4 @@ define('ALLOWED_MIME_TYPES', ['image/jpeg']);
 ini_set('upload_max_filesize', '10M');
 ini_set('post_max_size', '12M');
 ini_set('max_file_uploads', 5);
-
 ?>
