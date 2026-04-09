@@ -6,8 +6,8 @@
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 
-// Путь для хранения файлов сессий (используем SESSION_DIR_PATH из config.php)
-define('SESSION_DIR', defined('SESSION_DIR_PATH') ? SESSION_DIR_PATH : CACHE_DIR . 'sessions/');
+// Путь для хранения файлов сессий
+define('SESSION_DIR', CACHE_DIR . 'sessions/');
 // Название cookie для сессии
 define('SESSION_COOKIE_NAME', 'admin_session');
 // Время жизни сессии (30 дней)

@@ -1,8 +1,8 @@
 <?php
 $host = 'localhost';
-$dbname = 'pyramida_db';
-$username = 'root';
-$password = '';
+$dbname = 'pyramida_1';
+$username = 'pyramida_1';
+$password = '%t5+66qh}&RMMT&L';
 
 if (!defined('DB_HOST')) define('DB_HOST', $host);
 if (!defined('DB_NAME')) define('DB_NAME', $dbname);

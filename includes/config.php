@@ -1,16 +1,15 @@
 <?php
 
-define('BASE_URL', 'http://localhost/pyramida/');
+define('BASE_URL', 'http://pyramida.sibadi.org/');
 define('SITE_URL', BASE_URL);
 
 $basePath = __DIR__ . '/..';
 
-// Все загружаемые файлы и данные теперь хранятся в /cache
+define('UPLOAD_DIR_ORIGINALS', $basePath . '/uploads/originals/');
+define('UPLOAD_DIR_GALLERY', $basePath . '/uploads/gallery/');
+
 define('CACHE_DIR', $basePath . '/cache/');
-define('UPLOAD_DIR_ORIGINALS', CACHE_DIR . 'uploads/originals/');
-define('UPLOAD_DIR_GALLERY', CACHE_DIR . 'uploads/gallery/');
 define('CACHE_CERTIFICATES_DIR', CACHE_DIR . 'certificates/');
-define('SESSION_DIR_PATH', CACHE_DIR . 'sessions/');
 
 define('LOGS_DIR', $basePath . '/logs/');
 
