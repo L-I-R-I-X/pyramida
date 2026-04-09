@@ -1,6 +1,6 @@
 <?php
 
-define('BASE_URL', 'http:
+define('BASE_URL', 'http://pyramida.sibadi.org/');
 define('SITE_URL', BASE_URL);
 
 $basePath = __DIR__ . '/..';
