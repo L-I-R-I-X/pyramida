@@ -5,23 +5,19 @@ require_once 'functions.php';
 
 session_start();
 
-// Функция для логирования на страницу и в файл
 function logStep($step, $message, $status = 'info', $logFile = null) {
     $timestamp = date('Y-m-d H:i:s');
     $statusClass = $status === 'error' ? 'error' : ($status === 'success' ? 'success' : 'info');
     
-    // Вывод на страницу
     echo "<div class=\"log-entry log-$statusClass\">";
     echo "<strong>[$timestamp] $step:</strong> " . htmlspecialchars($message);
     echo "</div>\n";
     
-    // Логирование в файл (если указан)
     if ($logFile) {
         $logMessage = "[$timestamp] [$status] $step: $message\n";
         file_put_contents($logFile, $logMessage, FILE_APPEND);
     }
     
-    // Флеш для вывода
     flush();
     ob_flush();
 }
@@ -30,11 +26,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirect(SITE_URL . 'register.php', 'Неверный метод запроса', 'error');
 }
 
-// Отключаем буферизацию для пошагового вывода
 ob_end_clean();
 header('Content-Type: text/html; charset=utf-8');
 
-// Начинаем вывод HTML для логирования
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -61,7 +55,6 @@ header('Content-Type: text/html; charset=utf-8');
         
         $logFile = LOGS_DIR . 'register_' . date('Y-m-d') . '.log';
         
-        // Этап 1: Начало обработки
         logStep('Инициализация', 'Начало обработки заявки', 'info', $logFile);
         
         $fio = sanitizeInput($_POST['fio'] ?? '');
@@ -79,7 +72,6 @@ header('Content-Type: text/html; charset=utf-8');
         
         $errors = [];
         
-        // Этап 2: Валидация данных
         logStep('Валидация', 'Начало проверки данных формы', 'info', $logFile);
         
         if (empty($fio)) {
@@ -139,7 +131,6 @@ header('Content-Type: text/html; charset=utf-8');
         
         logStep('Валидация', 'Все проверки пройдены успешно', 'success', $logFile);
         
-        // Этап 3: Проверка файла
         $file = $_FILES['work'];
         $fileSize = $file['size'];
         $fileType = $file['type'];
@@ -179,7 +170,6 @@ header('Content-Type: text/html; charset=utf-8');
         
         if (!validateImageDimensions($fileTmpName)) {
             logStep('Файл', 'Изображение слишком большое или не удалось получить размеры', 'error', $logFile);
-            // Получаем детальную информацию об ошибке
             if (!file_exists($fileTmpName)) {
                 logStep('Файл', 'Временный файл не существует: ' . $fileTmpName, 'error', $logFile);
             } elseif (!is_readable($fileTmpName)) {
@@ -196,7 +186,6 @@ header('Content-Type: text/html; charset=utf-8');
         }
         logStep('Файл', 'Размеры изображения проверены', 'success', $logFile);
         
-        // Этап 4: Создание директорий
         logStep('Директории', 'Проверка существования папок для загрузки', 'info', $logFile);
         
         if (!is_dir(UPLOAD_DIR_ORIGINALS)) {
@@ -217,14 +206,12 @@ header('Content-Type: text/html; charset=utf-8');
         }
         logStep('Директории', 'Папка gallery готова: ' . UPLOAD_DIR_GALLERY, 'success', $logFile);
         
-        // Проверка прав на запись
         if (!is_writable(UPLOAD_DIR_ORIGINALS)) {
             logStep('Директории', 'Нет прав на запись в папку originals: ' . UPLOAD_DIR_ORIGINALS, 'error', $logFile);
             redirect(SITE_URL . 'register.php', 'Нет прав на запись в директорию', 'error');
         }
         logStep('Директории', 'Права на запись проверены', 'success', $logFile);
         
-        // Этап 5: Генерация имени и сохранение файла
         $filename = generateUniqueFilename($fileExt);
         $originalPath = UPLOAD_DIR_ORIGINALS . $filename;
         $galleryPath = UPLOAD_DIR_GALLERY . $filename;
@@ -238,7 +225,6 @@ header('Content-Type: text/html; charset=utf-8');
         }
         logStep('Файл', 'Оригинал сохранён успешно: ' . $originalPath, 'success', $logFile);
         
-        // Этап 6: Создание миниатюры
         logStep('Файл', "Создание миниатюры: $galleryPath", 'info', $logFile);
         
         if (!createThumbnail($originalPath, $galleryPath, 800)) {
@@ -248,7 +234,6 @@ header('Content-Type: text/html; charset=utf-8');
         }
         logStep('Файл', 'Миниатюра создана успешно: ' . $galleryPath, 'success', $logFile);
         
-        // Этап 7: Сохранение в БД
         logStep('БД', 'Начало сохранения данных в базу', 'info', $logFile);
         
         try {
@@ -279,7 +264,6 @@ header('Content-Type: text/html; charset=utf-8');
             redirect(SITE_URL . 'register.php', 'Ошибка сохранения данных', 'error');
         }
         
-        // Этап 8: Завершение
         logStep('Завершение', 'Заявка успешно обработана', 'success', $logFile);
         ?>
         

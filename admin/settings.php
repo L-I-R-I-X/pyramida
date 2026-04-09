@@ -4,18 +4,18 @@ require_once '../includes/db.php';
 require_once '../includes/functions.php';
 require_once '../includes/auth.php';
 
-// Проверяем авторизацию
+
 $currentUser = checkAuth();
 if (!$currentUser) {
     header('Location: login.php');
     exit;
 }
 
-// Получаем полную информацию о пользователе включая роль
+
 $fullUserInfo = getUserById($currentUser['id']);
 $isMainAdmin = $fullUserInfo && $fullUserInfo['role'] === 'main';
 
-// Если не главный администратор - перенаправляем
+
 if (!$isMainAdmin) {
     header('Location: applications.php');
     exit;
@@ -24,13 +24,13 @@ if (!$isMainAdmin) {
 $message = '';
 $messageType = '';
 
-// Обработка сообщений из URL
+
 if (isset($_GET['msg'])) {
     $message = $_GET['msg'];
     $messageType = 'success';
 }
 
-// Обработка действий
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($adminId > 0 && $adminId !== $currentUser['id']) {
             $result = deleteAdminUser($adminId);
             if ($result['success']) {
-                // Перезагружаем страницу после успешного удаления
+                
                 header('Location: settings.php?msg=' . urlencode($result['message']));
                 exit;
             } else {
@@ -59,9 +59,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($action === 'change_role') {
         $adminId = (int)($_POST['admin_id'] ?? 0);
         $newRole = $_POST['role'] ?? 'regular';
-        // Только главный администратор может менять роли и только на regular
+        
         if ($isMainAdmin && $adminId > 0 && $adminId !== $currentUser['id']) {
-            // Нельзя понизить роль главного администратора
+            
             $targetUser = getUserById($adminId);
             if ($targetUser && $targetUser['role'] === 'main') {
                 $message = 'Нельзя изменить роль главного администратора';
@@ -93,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Получаем список всех администраторов
+
 $admins = getAllAdmins();
 ?>
 <!DOCTYPE html>
@@ -283,7 +283,7 @@ $admins = getAllAdmins();
             document.getElementById('edit_new_password').value = '';
             document.getElementById('edit_password_requirements').style.display = 'none';
             document.getElementById('editSubmitPasswordBtn').disabled = true;
-            // Сброс стилей требований
+            
             resetEditRequirements();
             document.getElementById('editModal').style.display = 'block';
         }
@@ -292,7 +292,7 @@ $admins = getAllAdmins();
             document.getElementById('editModal').style.display = 'none';
         }
         
-        // Закрытие по клику вне модального окна
+        
         window.onclick = function(event) {
             var modal = document.getElementById('editModal');
             if (event.target == modal) {
@@ -300,7 +300,7 @@ $admins = getAllAdmins();
             }
         }
         
-        // Функция сброса стилей требований для модального окна
+        
         function resetEditRequirements() {
             const reqLength = document.getElementById('edit_req_length');
             const reqUppercase = document.getElementById('edit_req_uppercase');
@@ -316,7 +316,7 @@ $admins = getAllAdmins();
             });
         }
         
-        // Валидация пароля в реальном времени для формы создания администратора
+        
         const newPasswordInput = document.getElementById('new_password');
         const submitCreateBtn = document.getElementById('submitCreateBtn');
         
@@ -336,7 +336,7 @@ $admins = getAllAdmins();
                     special: /[^A-Za-z0-9А-Яа-яЁё]/.test(password)
                 };
                 
-                // Обновляем визуальное состояние требований
+                
                 updateRequirement(reqLength, validation.length);
                 updateRequirement(reqUppercase, validation.uppercase);
                 updateRequirement(reqLowercase, validation.lowercase);
@@ -362,7 +362,7 @@ $admins = getAllAdmins();
                 submitCreateBtn.disabled = !isPasswordValid;
             });
             
-            // Предотвращаем отправку формы если пароль не валиден
+            
             document.getElementById('createAdminForm').addEventListener('submit', function(e) {
                 const password = newPasswordInput.value;
                 if (!validatePassword(password)) {
@@ -372,7 +372,7 @@ $admins = getAllAdmins();
             });
         }
         
-        // Валидация пароля в модальном окне редактирования
+        
         const editPasswordInput = document.getElementById('edit_new_password');
         const editSubmitPasswordBtn = document.getElementById('editSubmitPasswordBtn');
         const editPasswordRequirements = document.getElementById('edit_password_requirements');
@@ -385,14 +385,14 @@ $admins = getAllAdmins();
             const editReqSpecial = document.getElementById('edit_req_special');
             
             function validateEditPassword(password) {
-                // Если поле пустое - показываем кнопку активной (пароль менять не обязательно)
+                
                 if (!password || password.trim() === '') {
                     editPasswordRequirements.style.display = 'none';
                     editSubmitPasswordBtn.disabled = false;
                     return true;
                 }
                 
-                // Показываем требования только если начали вводить пароль
+                
                 editPasswordRequirements.style.display = 'block';
                 
                 const validation = {
@@ -403,7 +403,7 @@ $admins = getAllAdmins();
                     special: /[^A-Za-z0-9А-Яа-яЁё]/.test(password)
                 };
                 
-                // Обновляем визуальное состояние требований
+                
                 updateEditRequirement(editReqLength, validation.length);
                 updateEditRequirement(editReqUppercase, validation.uppercase);
                 updateEditRequirement(editReqLowercase, validation.lowercase);
@@ -429,7 +429,7 @@ $admins = getAllAdmins();
                 editSubmitPasswordBtn.disabled = !isPasswordValid;
             });
             
-            // Предотвращаем отправку формы если пароль не валиден
+            
             document.getElementById('editForm').addEventListener('submit', function(e) {
                 const action = this.querySelector('button[name="action"]:focus')?.value;
                 if (action === 'change_password' && editPasswordInput.value.trim() !== '') {

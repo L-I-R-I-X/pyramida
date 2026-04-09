@@ -1,19 +1,19 @@
 <?php
-// Контроллер для страницы регистрации
+
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/functions.php';
 
-// Логика: получаем данные из сессии
+
 $success = isset($_GET['success']);
 $errors = $_SESSION['form_errors'] ?? [];
 $formData = $_SESSION['form_data'] ?? [];
 
-// Очищаем сессию после получения данных
+
 unset($_SESSION['form_errors']);
 unset($_SESSION['form_data']);
 
-// Представление (view)
+
 ?>
 <!DOCTYPE html>
 <html lang="ru">

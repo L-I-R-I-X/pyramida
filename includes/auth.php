@@ -1,35 +1,29 @@
 <?php
-/**
- * Система аутентификации с хранением сессий в файлах (/cache/sessions)
- */
+
 
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 
-// Путь для хранения файлов сессий
+
 define('SESSION_DIR', CACHE_DIR . 'sessions/');
-// Название cookie для сессии
+
 define('SESSION_COOKIE_NAME', 'admin_session');
-// Время жизни сессии (30 дней)
+
 define('SESSION_LIFETIME', 30 * 24 * 60 * 60);
 
-/**
- * Убедиться, что директория сессий существует
- */
+
 function ensureSessionDirExists() {
     if (!is_dir(SESSION_DIR)) {
         mkdir(SESSION_DIR, 0755, true);
     }
 }
 
-/**
- * Создание таблицы пользователей, если она не существует
- */
+
 function initAuthTables() {
     global $pdo;
     
     try {
-        // Таблица пользователей
+        
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS admin_users (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -46,21 +40,21 @@ function initAuthTables() {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
         
-        // Проверяем, создана ли таблица пользователей
+        
         $stmt = $pdo->query("SHOW TABLES LIKE 'admin_users'");
         if ($stmt->rowCount() == 0) {
             error_log('initAuthTables: Таблица admin_users НЕ была создана');
             return false;
         }
         
-        // Добавляем поле role, если оно отсутствует (для обратной совместимости)
+        
         try {
             $pdo->exec("ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS role ENUM('main', 'regular') DEFAULT 'regular' AFTER email");
         } catch (PDOException $e) {
-            // Поле уже существует или другая ошибка - игнорируем
+            
         }
         
-        // Устанавливаем роль 'main' для первого пользователя (admin), если у него нет роли
+        
         $stmt = $pdo->query("SELECT COUNT(*) FROM admin_users WHERE role = 'main'");
         if ($stmt->fetchColumn() == 0) {
             $pdo->exec("UPDATE admin_users SET role = 'main' WHERE username = 'admin' AND (role IS NULL OR role = 'regular') LIMIT 1");
@@ -75,9 +69,7 @@ function initAuthTables() {
     return true;
 }
 
-/**
- * Создание пользователя по умолчанию (если не существует)
- */
+
 function createDefaultUser($username = 'admin', $password = 'admin123') {
     global $pdo;
     
@@ -106,26 +98,17 @@ function createDefaultUser($username = 'admin', $password = 'admin123') {
     return false;
 }
 
-/**
- * Генерация безопасного токена сессии
- */
+
 function generateSessionToken() {
     return bin2hex(random_bytes(32));
 }
 
-/**
- * Получение пути к файлу сессии по токену
- */
+
 function getSessionFile($sessionToken) {
     return SESSION_DIR . 'sess_' . $sessionToken . '.dat';
 }
 
-/**
- * Аутентификация пользователя
- * @param string $username
- * @param string $password
- * @return array ['success' => bool, 'message' => string]
- */
+
 function authenticate($username, $password) {
     global $pdo;
     
@@ -146,7 +129,7 @@ function authenticate($username, $password) {
             return ['success' => false, 'message' => 'Неверное имя пользователя или пароль'];
         }
         
-        // Успешная аутентификация - создаём сессию
+        
         return createSession($user['id']);
         
     } catch (PDOException $e) {
@@ -155,11 +138,7 @@ function authenticate($username, $password) {
     }
 }
 
-/**
- * Создание сессии в файле
- * @param int $userId
- * @return array ['success' => bool, 'message' => string, 'token' => string|null]
- */
+
 function createSession($userId) {
     ensureSessionDirExists();
     
@@ -170,7 +149,7 @@ function createSession($userId) {
         $now = time();
         $expiresAt = $now + SESSION_LIFETIME;
         
-        // Данные сессии
+        
         $sessionData = [
             'user_id' => $userId,
             'session_token' => $sessionToken,
@@ -181,11 +160,11 @@ function createSession($userId) {
             'last_activity' => $now
         ];
         
-        // Сохраняем сессию в файл
+        
         $sessionFile = getSessionFile($sessionToken);
         file_put_contents($sessionFile, json_encode($sessionData));
         
-        // Устанавливаем cookie с токеном сессии
+        
         setcookie(
             SESSION_COOKIE_NAME,
             $sessionToken,
@@ -207,11 +186,7 @@ function createSession($userId) {
     }
 }
 
-/**
- * Чтение данных сессии из файла
- * @param string $sessionToken
- * @return array|null
- */
+
 function readSessionFile($sessionToken) {
     $sessionFile = getSessionFile($sessionToken);
     
@@ -229,10 +204,7 @@ function readSessionFile($sessionToken) {
     return $session;
 }
 
-/**
- * Проверка текущей сессии
- * @return array|null Возвращает данные пользователя или null
- */
+
 function checkAuth() {
     global $pdo;
     
@@ -244,40 +216,40 @@ function checkAuth() {
     $session = readSessionFile($sessionToken);
     
     if (!$session) {
-        // Сессия не найдена
+        
         destroySession($sessionToken);
         return null;
     }
     
-    // Проверяем срок действия
+    
     if ($session['expires_at'] < time()) {
-        // Сессия истекла
+        
         destroySession($sessionToken);
         return null;
     }
     
-    // Получаем данные пользователя из БД
+    
     try {
         $stmt = $pdo->prepare("SELECT id, username, is_active FROM admin_users WHERE id = :user_id AND is_active = 1");
         $stmt->execute(['user_id' => $session['user_id']]);
         $user = $stmt->fetch();
         
         if (!$user) {
-            // Пользователь не найден или заблокирован
+            
             destroySession($sessionToken);
             return null;
         }
         
-        // Обновляем время последней активности и продлеваем сессию
+        
         $newExpiresAt = time() + SESSION_LIFETIME;
         $session['last_activity'] = time();
         $session['expires_at'] = $newExpiresAt;
         
-        // Сохраняем обновлённую сессию
+        
         $sessionFile = getSessionFile($sessionToken);
         file_put_contents($sessionFile, json_encode($session));
         
-        // Обновляем cookie с новым временем истечения
+        
         setcookie(
             SESSION_COOKIE_NAME,
             $sessionToken,
@@ -291,14 +263,14 @@ function checkAuth() {
             ]
         );
         
-        // Пытаемся получить email, если колонка существует
+        
         $email = null;
         try {
             $stmt = $pdo->prepare("SELECT email FROM admin_users WHERE id = :user_id");
             $stmt->execute(['user_id' => $session['user_id']]);
             $email = $stmt->fetchColumn();
         } catch (PDOException $e) {
-            // Колонки email не существует - это нормально
+            
             $email = null;
         }
         
@@ -314,10 +286,7 @@ function checkAuth() {
     }
 }
 
-/**
- * Уничтожение сессии
- * @param string|null $sessionToken
- */
+
 function destroySession($sessionToken = null) {
     if ($sessionToken === null && isset($_COOKIE[SESSION_COOKIE_NAME])) {
         $sessionToken = $_COOKIE[SESSION_COOKIE_NAME];
@@ -330,7 +299,7 @@ function destroySession($sessionToken = null) {
         }
     }
     
-    // Удаляем cookie
+    
     setcookie(
         SESSION_COOKIE_NAME,
         '',
@@ -345,9 +314,7 @@ function destroySession($sessionToken = null) {
     );
 }
 
-/**
- * Очистка старых сессий (сборщик мусора)
- */
+
 function cleanupOldSessions() {
     ensureSessionDirExists();
     
@@ -366,14 +333,12 @@ function cleanupOldSessions() {
     }
 }
 
-/**
- * Принудительная проверка авторизации (редирект на login если не авторизован)
- */
+
 function requireAuth() {
     $user = checkAuth();
     
     if (!$user) {
-        // Сохраняем текущий URL для редиректа после входа
+        
         $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
         header('Location: ' . BASE_URL . 'admin/login.php');
         exit;
@@ -382,11 +347,7 @@ function requireAuth() {
     return $user;
 }
 
-/**
- * Получение информации о пользователе по ID
- * @param int $userId
- * @return array|null
- */
+
 function getUserById($userId) {
     global $pdo;
     
@@ -400,22 +361,13 @@ function getUserById($userId) {
     }
 }
 
-/**
- * Проверка, является ли пользователь главным администратором
- * @param int $userId
- * @return bool
- */
+
 function isMainAdmin($userId) {
     $user = getUserById($userId);
     return $user && $user['role'] === 'main';
 }
 
-/**
- * Изменение логина пользователя
- * @param int $userId
- * @param string $newUsername
- * @return array ['success' => bool, 'message' => string]
- */
+
 function changeUsername($userId, $newUsername) {
     global $pdo;
     
@@ -424,7 +376,7 @@ function changeUsername($userId, $newUsername) {
     }
     
     try {
-        // Проверяем, не занят ли логин другим пользователем
+        
         $stmt = $pdo->prepare("SELECT id FROM admin_users WHERE username = :username AND id != :id");
         $stmt->execute(['username' => $newUsername, 'id' => $userId]);
         if ($stmt->fetch()) {
@@ -447,11 +399,7 @@ function changeUsername($userId, $newUsername) {
     }
 }
 
-/**
- * Валидация сложности пароля
- * @param string $password
- * @return array ['valid' => bool, 'errors' => array]
- */
+
 function validatePasswordStrength($password) {
     $errors = [];
     
@@ -459,27 +407,27 @@ function validatePasswordStrength($password) {
         return ['valid' => false, 'errors' => ['Пароль обязателен']];
     }
     
-    // Проверка длины (минимум 12 символов)
+    
     if (strlen($password) < 12) {
         $errors[] = 'Минимум 12 символов';
     }
     
-    // Проверка наличия заглавных букв
+    
     if (!preg_match('/[A-ZА-ЯЁ]/u', $password)) {
         $errors[] = 'Хотя бы одна заглавная буква';
     }
     
-    // Проверка наличия строчных букв
+    
     if (!preg_match('/[a-zа-яё]/u', $password)) {
         $errors[] = 'Хотя бы одна строчная буква';
     }
     
-    // Проверка наличия цифр
+    
     if (!preg_match('/[0-9]/', $password)) {
         $errors[] = 'Хотя бы одна цифра';
     }
     
-    // Проверка наличия спецсимволов
+    
     if (!preg_match('/[^A-Za-z0-9А-Яа-яЁё]/', $password)) {
         $errors[] = 'Хотя бы один специальный символ';
     }
@@ -490,16 +438,11 @@ function validatePasswordStrength($password) {
     ];
 }
 
-/**
- * Изменение пароля пользователя
- * @param int $userId
- * @param string $newPassword
- * @return array ['success' => bool, 'message' => string]
- */
+
 function changePassword($userId, $newPassword) {
     global $pdo;
     
-    // Валидация сложности пароля
+    
     $validation = validatePasswordStrength($newPassword);
     if (!$validation['valid']) {
         return ['success' => false, 'message' => 'Требования к паролю не соблюдены: ' . implode(', ', $validation['errors'])];
@@ -514,7 +457,7 @@ function changePassword($userId, $newPassword) {
         ]);
         
         if ($result) {
-            // Уничтожаем все сессии пользователя для безопасности
+            
             destroyAllUserSessions($userId);
             return ['success' => true, 'message' => 'Пароль успешно изменён'];
         }
@@ -525,13 +468,7 @@ function changePassword($userId, $newPassword) {
     }
 }
 
-/**
- * Создание нового администратора
- * @param string $username
- * @param string $password
- * @param string $role
- * @return array ['success' => bool, 'message' => string, 'user_id' => int|null]
- */
+
 function createAdminUser($username, $password, $role = 'regular') {
     global $pdo;
     
@@ -539,17 +476,17 @@ function createAdminUser($username, $password, $role = 'regular') {
         return ['success' => false, 'message' => 'Логин должен быть не менее 3 символов', 'user_id' => null];
     }
     
-    // Валидация сложности пароля
+    
     $validation = validatePasswordStrength($password);
     if (!$validation['valid']) {
         return ['success' => false, 'message' => 'Требования к паролю не соблюдены: ' . implode(', ', $validation['errors']), 'user_id' => null];
     }
     
-    // Всегда создаём только обычных администраторов
+    
     $role = 'regular';
     
     try {
-        // Проверяем, не занят ли логин
+        
         $stmt = $pdo->prepare("SELECT id FROM admin_users WHERE username = :username");
         $stmt->execute(['username' => $username]);
         if ($stmt->fetch()) {
@@ -575,16 +512,12 @@ function createAdminUser($username, $password, $role = 'regular') {
     }
 }
 
-/**
- * Удаление администратора
- * @param int $userId
- * @return array ['success' => bool, 'message' => string]
- */
+
 function deleteAdminUser($userId) {
     global $pdo;
     
     try {
-        // Нельзя удалить последнего главного администратора
+        
         $stmt = $pdo->query("SELECT COUNT(*) FROM admin_users WHERE role = 'main' AND is_active = 1");
         $mainAdminCount = $stmt->fetchColumn();
         
@@ -600,10 +533,10 @@ function deleteAdminUser($userId) {
             return ['success' => false, 'message' => 'Нельзя удалить последнего главного администратора'];
         }
         
-        // Удаляем все сессии пользователя
+        
         destroyAllUserSessions($userId);
         
-        // Мягкое удаление - деактивируем пользователя
+        
         $stmt = $pdo->prepare("UPDATE admin_users SET is_active = 0 WHERE id = :id");
         $result = $stmt->execute(['id' => $userId]);
         
@@ -617,12 +550,7 @@ function deleteAdminUser($userId) {
     }
 }
 
-/**
- * Изменение роли администратора
- * @param int $userId
- * @param string $newRole
- * @return array ['success' => bool, 'message' => string]
- */
+
 function changeAdminRole($userId, $newRole) {
     global $pdo;
     
@@ -647,10 +575,7 @@ function changeAdminRole($userId, $newRole) {
     }
 }
 
-/**
- * Получение списка всех администраторов
- * @return array
- */
+
 function getAllAdmins() {
     global $pdo;
     
@@ -663,10 +588,7 @@ function getAllAdmins() {
     }
 }
 
-/**
- * Удаление всех сессий пользователя (для принудительного выхода везде)
- * @param int $userId
- */
+
 function destroyAllUserSessions($userId) {
     ensureSessionDirExists();
     
@@ -684,14 +606,14 @@ function destroyAllUserSessions($userId) {
     }
 }
 
-// Инициализация таблиц при подключении
+
 ensureSessionDirExists();
 initAuthTables();
 
-// Создаём пользователя по умолчанию если нет пользователей
+
 createDefaultUser();
 
-// Очищаем старые сессии периодически
-if (rand(1, 100) <= 5) { // 5% шанс при каждом запросе
+
+if (rand(1, 100) <= 5) { 
     cleanupOldSessions();
 }
