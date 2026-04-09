@@ -36,13 +36,11 @@ function initAuthTables() {
                 username VARCHAR(50) UNIQUE NOT NULL,
                 password_hash VARCHAR(255) NOT NULL,
                 email VARCHAR(100),
-                role ENUM('main', 'regular') DEFAULT 'regular',
                 created_at DATETIME NOT NULL,
                 updated_at DATETIME NOT NULL,
                 is_active TINYINT(1) DEFAULT 1,
                 INDEX idx_username (username),
-                INDEX idx_is_active (is_active),
-                INDEX idx_role (role)
+                INDEX idx_is_active (is_active)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
         
@@ -51,19 +49,6 @@ function initAuthTables() {
         if ($stmt->rowCount() == 0) {
             error_log('initAuthTables: Таблица admin_users НЕ была создана');
             return false;
-        }
-        
-        // Добавляем поле role, если оно отсутствует (для обратной совместимости)
-        try {
-            $pdo->exec("ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS role ENUM('main', 'regular') DEFAULT 'regular' AFTER email");
-        } catch (PDOException $e) {
-            // Поле уже существует или другая ошибка - игнорируем
-        }
-        
-        // Устанавливаем роль 'main' для первого пользователя (admin), если у него нет роли
-        $stmt = $pdo->query("SELECT COUNT(*) FROM admin_users WHERE role = 'main'");
-        if ($stmt->fetchColumn() == 0) {
-            $pdo->exec("UPDATE admin_users SET role = 'main' WHERE username = 'admin' AND (role IS NULL OR role = 'regular') LIMIT 1");
         }
         
     } catch (PDOException $e) {
@@ -391,23 +376,13 @@ function getUserById($userId) {
     global $pdo;
     
     try {
-        $stmt = $pdo->prepare("SELECT id, username, email, role, created_at, is_active FROM admin_users WHERE id = :id");
+        $stmt = $pdo->prepare("SELECT id, username, email, created_at, is_active FROM admin_users WHERE id = :id");
         $stmt->execute(['id' => $userId]);
         return $stmt->fetch();
     } catch (PDOException $e) {
         error_log('getUserById error: ' . $e->getMessage());
         return null;
     }
-}
-
-/**
- * Проверка, является ли пользователь главным администратором
- * @param int $userId
- * @return bool
- */
-function isMainAdmin($userId) {
-    $user = getUserById($userId);
-    return $user && $user['role'] === 'main';
 }
 
 /**
@@ -522,144 +497,6 @@ function changePassword($userId, $newPassword) {
     } catch (PDOException $e) {
         error_log('changePassword error: ' . $e->getMessage());
         return ['success' => false, 'message' => 'Ошибка базы данных'];
-    }
-}
-
-/**
- * Создание нового администратора
- * @param string $username
- * @param string $password
- * @param string $role
- * @return array ['success' => bool, 'message' => string, 'user_id' => int|null]
- */
-function createAdminUser($username, $password, $role = 'regular') {
-    global $pdo;
-    
-    if (empty($username) || strlen($username) < 3) {
-        return ['success' => false, 'message' => 'Логин должен быть не менее 3 символов', 'user_id' => null];
-    }
-    
-    // Валидация сложности пароля
-    $validation = validatePasswordStrength($password);
-    if (!$validation['valid']) {
-        return ['success' => false, 'message' => 'Требования к паролю не соблюдены: ' . implode(', ', $validation['errors']), 'user_id' => null];
-    }
-    
-    // Всегда создаём только обычных администраторов
-    $role = 'regular';
-    
-    try {
-        // Проверяем, не занят ли логин
-        $stmt = $pdo->prepare("SELECT id FROM admin_users WHERE username = :username");
-        $stmt->execute(['username' => $username]);
-        if ($stmt->fetch()) {
-            return ['success' => false, 'message' => 'Такой логин уже занят', 'user_id' => null];
-        }
-        
-        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-        $now = date('Y-m-d H:i:s');
-        
-        $stmt = $pdo->prepare("INSERT INTO admin_users (username, password_hash, role, created_at, updated_at, is_active) VALUES (:username, :password, :role, :created_at, :updated_at, 1)");
-        $stmt->execute([
-            'username' => $username,
-            'password' => $passwordHash,
-            'role' => $role,
-            'created_at' => $now,
-            'updated_at' => $now
-        ]);
-        
-        return ['success' => true, 'message' => 'Администратор успешно создан', 'user_id' => $pdo->lastInsertId()];
-    } catch (PDOException $e) {
-        error_log('createAdminUser error: ' . $e->getMessage());
-        return ['success' => false, 'message' => 'Ошибка базы данных', 'user_id' => null];
-    }
-}
-
-/**
- * Удаление администратора
- * @param int $userId
- * @return array ['success' => bool, 'message' => string]
- */
-function deleteAdminUser($userId) {
-    global $pdo;
-    
-    try {
-        // Нельзя удалить последнего главного администратора
-        $stmt = $pdo->query("SELECT COUNT(*) FROM admin_users WHERE role = 'main' AND is_active = 1");
-        $mainAdminCount = $stmt->fetchColumn();
-        
-        $stmt = $pdo->prepare("SELECT role FROM admin_users WHERE id = :id");
-        $stmt->execute(['id' => $userId]);
-        $user = $stmt->fetch();
-        
-        if (!$user) {
-            return ['success' => false, 'message' => 'Пользователь не найден'];
-        }
-        
-        if ($user['role'] === 'main' && $mainAdminCount <= 1) {
-            return ['success' => false, 'message' => 'Нельзя удалить последнего главного администратора'];
-        }
-        
-        // Удаляем все сессии пользователя
-        destroyAllUserSessions($userId);
-        
-        // Мягкое удаление - деактивируем пользователя
-        $stmt = $pdo->prepare("UPDATE admin_users SET is_active = 0 WHERE id = :id");
-        $result = $stmt->execute(['id' => $userId]);
-        
-        if ($result) {
-            return ['success' => true, 'message' => 'Администратор успешно удалён'];
-        }
-        return ['success' => false, 'message' => 'Ошибка при удалении'];
-    } catch (PDOException $e) {
-        error_log('deleteAdminUser error: ' . $e->getMessage());
-        return ['success' => false, 'message' => 'Ошибка базы данных'];
-    }
-}
-
-/**
- * Изменение роли администратора
- * @param int $userId
- * @param string $newRole
- * @return array ['success' => bool, 'message' => string]
- */
-function changeAdminRole($userId, $newRole) {
-    global $pdo;
-    
-    if (!in_array($newRole, ['main', 'regular'])) {
-        return ['success' => false, 'message' => 'Недопустимая роль'];
-    }
-    
-    try {
-        $stmt = $pdo->prepare("UPDATE admin_users SET role = :role WHERE id = :id");
-        $result = $stmt->execute([
-            'role' => $newRole,
-            'id' => $userId
-        ]);
-        
-        if ($result) {
-            return ['success' => true, 'message' => 'Роль успешно изменена'];
-        }
-        return ['success' => false, 'message' => 'Ошибка при изменении роли'];
-    } catch (PDOException $e) {
-        error_log('changeAdminRole error: ' . $e->getMessage());
-        return ['success' => false, 'message' => 'Ошибка базы данных'];
-    }
-}
-
-/**
- * Получение списка всех администраторов
- * @return array
- */
-function getAllAdmins() {
-    global $pdo;
-    
-    try {
-        $stmt = $pdo->query("SELECT id, username, role, created_at, is_active FROM admin_users WHERE is_active = 1 ORDER BY created_at DESC");
-        return $stmt->fetchAll();
-    } catch (PDOException $e) {
-        error_log('getAllAdmins error: ' . $e->getMessage());
-        return [];
     }
 }
 
