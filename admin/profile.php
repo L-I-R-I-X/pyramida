@@ -4,7 +4,7 @@ require_once '../includes/db.php';
 require_once '../includes/functions.php';
 require_once '../includes/auth.php';
 
-// Проверяем авторизацию
+
 $currentUser = checkAuth();
 if (!$currentUser) {
     header('Location: login.php');
@@ -14,7 +14,7 @@ if (!$currentUser) {
 $message = '';
 $messageType = '';
 
-// Обработка действий
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = $result['message'];
         $messageType = $result['success'] ? 'success' : 'error';
         
-        // Если логин успешно изменён, обновляем данные текущего пользователя
+        
         if ($result['success']) {
             $currentUser = getUserById($currentUser['id']);
         }
@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $newPassword = $_POST['new_password'] ?? '';
         $confirmPassword = $_POST['confirm_password'] ?? '';
         
-        // Проверка текущего пароля
+        
         global $pdo;
         try {
             $stmt = $pdo->prepare("SELECT password_hash FROM admin_users WHERE id = :id");
@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Получаем полную информацию о пользователе
+
 $fullUserInfo = getUserById($currentUser['id']);
 $isMainAdmin = $fullUserInfo && $fullUserInfo['role'] === 'main';
 ?>
@@ -176,7 +176,7 @@ $isMainAdmin = $fullUserInfo && $fullUserInfo['role'] === 'main';
         </main>
     </div>
     <script>
-        // Валидация пароля в реальном времени для формы смены пароля
+        
         const newPasswordInput = document.getElementById('new_password');
         const confirmPasswordInput = document.getElementById('confirm_password');
         const submitPasswordBtn = document.getElementById('submitPasswordBtn');
@@ -196,7 +196,7 @@ $isMainAdmin = $fullUserInfo && $fullUserInfo['role'] === 'main';
                 special: /[^A-Za-z0-9А-Яа-яЁё]/.test(password)
             };
             
-            // Обновляем визуальное состояние требований
+            
             updateRequirement(reqLength, validation.length);
             updateRequirement(reqUppercase, validation.uppercase);
             updateRequirement(reqLowercase, validation.lowercase);
@@ -229,7 +229,7 @@ $isMainAdmin = $fullUserInfo && $fullUserInfo['role'] === 'main';
         newPasswordInput.addEventListener('input', checkPasswordForm);
         confirmPasswordInput.addEventListener('input', checkPasswordForm);
         
-        // Предотвращаем отправку формы если пароль не валиден
+        
         document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
             const newPassword = newPasswordInput.value;
             if (!validatePassword(newPassword)) {

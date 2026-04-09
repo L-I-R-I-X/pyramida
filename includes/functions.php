@@ -133,10 +133,21 @@ function updateSetting($key, $value) {
     }
 }
 
-function validateImageDimensions($filePath, $maxWidth = 5000, $maxHeight = 5000) {
-    $imageInfo = getimagesize($filePath);
+function validateImageDimensions($filePath, $maxWidth = 10000, $maxHeight = 10000) {
+    if (!file_exists($filePath)) {
+        error_log("validateImageDimensions: файл не существует: $filePath");
+        return false;
+    }
+    
+    if (!is_readable($filePath)) {
+        error_log("validateImageDimensions: файл не читаем: $filePath");
+        return false;
+    }
+    
+    $imageInfo = @getimagesize($filePath);
 
     if (!$imageInfo) {
+        error_log("validateImageDimensions: не удалось получить размеры изображения: $filePath");
         return false;
     }
 
@@ -144,6 +155,7 @@ function validateImageDimensions($filePath, $maxWidth = 5000, $maxHeight = 5000)
     $height = $imageInfo[1];
 
     if ($width > $maxWidth || $height > $maxHeight) {
+        error_log("validateImageDimensions: изображение слишком большое: {$width}x{$height} (макс: {$maxWidth}x{$maxHeight})");
         return false;
     }
 

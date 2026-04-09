@@ -1,13 +1,11 @@
 <?php
-/**
- * Страница входа в админ-панель
- */
+
 
 require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
 
-// Если уже авторизован - перенаправляем на главную админки
+
 $currentUser = checkAuth();
 if ($currentUser) {
     header('Location: applications.php');
@@ -27,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $result = authenticate($username, $password);
         
         if ($result['success']) {
-            // Перенаправление после успешного входа
+            
             $redirect = $_GET['redirect'] ?? 'applications.php';
             header('Location: ' . $redirect);
             exit;

@@ -2,20 +2,20 @@
 require_once __DIR__ . '/../../includes/config.php';
 require_once __DIR__ . '/../../includes/auth.php';
 
-// Проверяем авторизацию
+
 $currentUser = checkAuth();
 if (!$currentUser) {
     header('Location: login.php');
     exit;
 }
 
-// Получаем полную информацию о пользователе включая роль
+
 $fullUserInfo = getUserById($currentUser['id']);
 $isMainAdmin = $fullUserInfo && $fullUserInfo['role'] === 'main';
 
-// Определяем текущую страницу для подсветки активного пункта
+
 $currentPage = basename($_SERVER['PHP_SELF']);
-// Для модерации подсвечиваем "Заявки"
+
 $isModerationPage = $currentPage === 'moderation.php';
 $highlightApplications = $currentPage === 'applications.php' || $isModerationPage;
 ?>
