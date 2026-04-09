@@ -6,8 +6,8 @@
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 
-// Путь для хранения файлов сессий
-define('SESSION_DIR', CACHE_DIR . 'sessions/');
+// Путь для хранения файлов сессий (используем SESSION_DIR_PATH из config.php)
+define('SESSION_DIR', defined('SESSION_DIR_PATH') ? SESSION_DIR_PATH : CACHE_DIR . 'sessions/');
 // Название cookie для сессии
 define('SESSION_COOKIE_NAME', 'admin_session');
 // Время жизни сессии (30 дней)
@@ -258,7 +258,7 @@ function checkAuth() {
     
     // Получаем данные пользователя из БД
     try {
-        $stmt = $pdo->prepare("SELECT id, username, email, is_active FROM admin_users WHERE id = :user_id AND is_active = 1");
+        $stmt = $pdo->prepare("SELECT id, username, is_active FROM admin_users WHERE id = :user_id AND is_active = 1");
         $stmt->execute(['user_id' => $session['user_id']]);
         $user = $stmt->fetch();
         
@@ -291,10 +291,21 @@ function checkAuth() {
             ]
         );
         
+        // Пытаемся получить email, если колонка существует
+        $email = null;
+        try {
+            $stmt = $pdo->prepare("SELECT email FROM admin_users WHERE id = :user_id");
+            $stmt->execute(['user_id' => $session['user_id']]);
+            $email = $stmt->fetchColumn();
+        } catch (PDOException $e) {
+            // Колонки email не существует - это нормально
+            $email = null;
+        }
+        
         return [
             'id' => $user['id'],
             'username' => $user['username'],
-            'email' => $user['email']
+            'email' => $email
         ];
         
     } catch (PDOException $e) {
