@@ -1,16 +1,1 @@
-```
-# Lock files
-.lock
-
-# Environment
-.env
-.env.local
-.env.*
-
-# Logs and temp files
-*.log
-*.tmp
-
-# Uploads directory (if it contains temporary files)
-uploads/
-```
+Nothing should be ignored based on the provided file changes, as they only include source files (.php files) without any build artifacts, dependencies, or temporary files.
