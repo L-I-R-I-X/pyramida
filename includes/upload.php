@@ -178,8 +178,21 @@ header('Content-Type: text/html; charset=utf-8');
         logStep('Файл', 'Сигнатура файла проверена (JPEG)', 'success', $logFile);
         
         if (!validateImageDimensions($fileTmpName)) {
-            logStep('Файл', 'Изображение слишком большое', 'error', $logFile);
-            redirect(SITE_URL . 'register.php', 'Изображение слишком большое (макс. 5000×5000 px)', 'error');
+            logStep('Файл', 'Изображение слишком большое или не удалось получить размеры', 'error', $logFile);
+            // Получаем детальную информацию об ошибке
+            if (!file_exists($fileTmpName)) {
+                logStep('Файл', 'Временный файл не существует: ' . $fileTmpName, 'error', $logFile);
+            } elseif (!is_readable($fileTmpName)) {
+                logStep('Файл', 'Временный файл не читаем (проверьте права): ' . $fileTmpName, 'error', $logFile);
+            } else {
+                $imgInfo = @getimagesize($fileTmpName);
+                if (!$imgInfo) {
+                    logStep('Файл', 'Не удалось прочитать размеры изображения (возможно, файл повреждён)', 'error', $logFile);
+                } else {
+                    logStep('Файл', "Размеры изображения: {$imgInfo[0]}x{$imgInfo[1]} px (макс. 10000×10000 px)", 'error', $logFile);
+                }
+            }
+            redirect(SITE_URL . 'register.php', 'Изображение слишком большое или повреждено (макс. 10000×10000 px)', 'error');
         }
         logStep('Файл', 'Размеры изображения проверены', 'success', $logFile);
         

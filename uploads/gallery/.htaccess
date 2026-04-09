@@ -1,0 +1,12 @@
+# Разрешить доступ только к изображениям
+<FilesMatch "\.(jpg|jpeg|png|gif|webp)$">
+    Require all granted
+</FilesMatch>
+
+# Запрет выполнения PHP
+<FilesMatch "\.(php|phtml|php3|php4|php5|phps)$">
+    Deny from all
+</FilesMatch>
+
+# Отключить листинг директорий
+Options -Indexes
