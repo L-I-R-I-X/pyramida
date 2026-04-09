@@ -2,6 +2,9 @@
     <div class="container">
         <p>&copy; 2026 Конкурс «Пирамида»</p>
         <p>Кафедра "Архитектурно-конструктивное проектирование" СибАДИ</p>
-        <p>Тел: +7 (913) 623-48-34 | Email: shipilina.ev@sibadi.org</p>
+        <p><strong>Контактное лицо:</strong> Минеева Зоя Владимировна, Шипилина Евгения Владимировна</p>
+        <p><strong>E-mail контактного лица Конкурса:</strong> <a href="mailto:shipilina.ev@sibadi.org" style="color: inherit;">shipilina.ev@sibadi.org</a></p>
+        <p><strong>Телефон контактного лица Конкурса:</strong></p>
+        <p>+7 (913) 623-48-34 — Евгения Владимировна | +7 (913) 629-32-68 — Зоя Владимировна</p>
     </div>
 </footer>
