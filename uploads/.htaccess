@@ -1,0 +1,12 @@
+# Запрет выполнения PHP в папке загрузок
+<FilesMatch "\.(php|phtml|php3|php4|php5|phps)$">
+    Deny from all
+</FilesMatch>
+
+# Разрешить только изображения
+<FilesMatch "\.(jpg|jpeg|png|gif|webp)$">
+    Require all granted
+</FilesMatch>
+
+# Отключить листинг директорий
+Options -Indexes
