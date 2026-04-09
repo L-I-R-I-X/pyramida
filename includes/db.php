@@ -16,9 +16,9 @@ function ensureDirectoriesExist() {
         $basePath . '/cache/',
         $basePath . '/cache/sessions/',
         $basePath . '/cache/certificates/',
-        $basePath . '/uploads/',
-        $basePath . '/uploads/originals/',
-        $basePath . '/uploads/gallery/',
+        $basePath . '/cache/uploads/',
+        $basePath . '/cache/uploads/originals/',
+        $basePath . '/cache/uploads/gallery/',
         $basePath . '/logs/',
     ];
 

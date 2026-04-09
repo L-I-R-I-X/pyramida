@@ -5,8 +5,8 @@ define('SITE_URL', BASE_URL);
 
 $basePath = __DIR__ . '/..';
 
-define('UPLOAD_DIR_ORIGINALS', $basePath . '/uploads/originals/');
-define('UPLOAD_DIR_GALLERY', $basePath . '/uploads/gallery/');
+define('UPLOAD_DIR_ORIGINALS', $basePath . '/cache/uploads/originals/');
+define('UPLOAD_DIR_GALLERY', $basePath . '/cache/uploads/gallery/');
 
 define('CACHE_DIR', $basePath . '/cache/');
 define('CACHE_CERTIFICATES_DIR', CACHE_DIR . 'certificates/');
