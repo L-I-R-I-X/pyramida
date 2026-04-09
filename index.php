@@ -16,7 +16,7 @@
             <div class="container">
                 <h1>I Международный конкурс архитектурной графики и онлайн-выставка «Пирамида»</h1>
                 <p class="hero-subtitle">Для студентов ВУЗов, техникумов и колледжей</p>
-                <p class="hero-dates">📅 1 мая – 31 мая 2026 г.</p>
+                <p class="hero-dates">📅 10 апреля – 18 мая 2026 г.</p>
                 <a href="register.php" class="btn btn-large">Подать заявку</a>
                 <a href="requirements.php" class="btn btn-outline">Требования к работам</a>
             </div>
@@ -49,19 +49,19 @@
                 <h2>Этапы проведения</h2>
                 <div class="timeline-grid">
                     <div class="timeline-item">
-                        <div class="timeline-date">1–18 мая</div>
-                        <div class="timeline-title">Приём заявок</div>
-                        <div class="timeline-desc">Подача работ и заявок участников</div>
+                        <div class="timeline-date">10 апреля – 10 мая</div>
+                        <div class="timeline-title">1 этап: Приём заявок и работ</div>
+                        <div class="timeline-desc">Отправка заявок и работ на сайт Конкурса ПИРАМИДА</div>
                     </div>
                     <div class="timeline-item">
-                        <div class="timeline-date">18–25 мая</div>
-                        <div class="timeline-title">Работа жюри</div>
-                        <div class="timeline-desc">Оценка работ экспертным жюри</div>
+                        <div class="timeline-date">11 мая – 14 мая</div>
+                        <div class="timeline-title">2 этап: Работа жюри</div>
+                        <div class="timeline-desc">Работа жюри Конкурса</div>
                     </div>
                     <div class="timeline-item">
-                        <div class="timeline-date">25–31 мая</div>
-                        <div class="timeline-title">Онлайн-выставка</div>
-                        <div class="timeline-desc">Публикация лучших работ</div>
+                        <div class="timeline-date">15 мая – 18 мая</div>
+                        <div class="timeline-title">3 этап: Онлайн-выставка</div>
+                        <div class="timeline-desc">Проведение онлайн выставки на сайте Конкурса ПИРАМИДА по номинациям и разделам</div>
                     </div>
                 </div>
                 <p class="note">* Даты могут быть изменены. Следите за обновлениями на сайте.</p>

@@ -49,7 +49,7 @@ unset($_SESSION['form_data']);
                             <li><strong>Взнос:</strong> участие бесплатное</li>
                             <li><strong>Формат:</strong> JPG, JPEG (от 150 до 300 dpi)</li>
                             <li><strong>Размер:</strong> от 1 Мб до 10 Мб</li>
-                            <li><strong>Срок подачи:</strong> до 31 марта 2026</li>
+                            <li><strong>Срок подачи:</strong> до 10 мая 2026</li>
                         </ul>
                         
                         <div class="info-block">
