@@ -19,7 +19,7 @@ function exportParticipants($pdo) {
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="participants_' . date('Y-m-d_H-i-s') . '.csv"');
     
-    $output = fopen('php:
+    $output = fopen('php://output', 'w');
     fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
     fputcsv($output, ['№','ФИО','Учебное заведение','Курс','Номинация','Раздел','Название работы','Email','Телефон','Статус','Дата заявки'], ';');
 
@@ -40,7 +40,7 @@ function exportWinners($pdo) {
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="winners_' . date('Y-m-d_H-i-s') . '.csv"');
     
-    $output = fopen('php:
+    $output = fopen('php://output', 'w');
     fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
     fputcsv($output, ['№','ФИО','Учебное заведение','Курс','Номинация','Раздел','Название работы','Email','Телефон','Оценка жюри','Дата заявки'], ';');
 
