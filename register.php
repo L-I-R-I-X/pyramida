@@ -9,6 +9,9 @@ $success = isset($_GET['success']);
 $errors = $_SESSION['form_errors'] ?? [];
 $formData = $_SESSION['form_data'] ?? [];
 
+// Получаем данные об успешной отправке
+$applicationId = $_GET['application_id'] ?? null;
+$filename = $_GET['filename'] ?? null;
 
 unset($_SESSION['form_errors']);
 unset($_SESSION['form_data']);
@@ -62,11 +65,19 @@ unset($_SESSION['form_data']);
                     </div>
                     
                     <div class="register-form-container">
-                        <?php if ($success): ?>
+                        <?php if ($success && $applicationId && $filename): ?>
                             <div class="alert alert-success">
                                 <h3>✅ Заявка успешно отправлена!</h3>
                                 <p>Ваша работа принята на рассмотрение жюри.</p>
-                                <p>После подведения итогов дипломы и сертификаты участников будут доступны для скачивания на сайте во вкладках «Победители» и Участники»</p>
+                                <p>ID заявки: <strong><?php echo htmlspecialchars($applicationId); ?></strong></p>
+                                <p>Файл работы: <strong><?php echo htmlspecialchars($filename); ?></strong></p>
+                                <p>После подведения итогов дипломы и сертификаты участников будут доступны для скачивания на сайте во вкладках «Победители» и «Участники»</p>
+                            </div>
+                        <?php elseif ($success): ?>
+                            <div class="alert alert-success">
+                                <h3>✅ Заявка успешно отправлена!</h3>
+                                <p>Ваша работа принята на рассмотрение жюри.</p>
+                                <p>После подведения итогов дипломы и сертификаты участников будут доступны для скачивания на сайте во вкладках «Победители» и «Участники»</p>
                             </div>
                         <?php endif; ?>
                         

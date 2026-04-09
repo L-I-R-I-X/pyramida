@@ -9,182 +9,147 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirect(SITE_URL . 'register.php', 'Неверный метод запроса', 'error');
 }
 
-// Отключаем буферизацию для пошагового вывода
-ob_end_clean();
-header('Content-Type: text/html; charset=utf-8');
+$fio = sanitizeInput($_POST['fio'] ?? '');
+$educational_institution = sanitizeInput($_POST['educational_institution'] ?? '');
+$course = sanitizeInput($_POST['course'] ?? '');
+$nominationSection = sanitizeInput($_POST['nomination_section'] ?? '');
+$nomination = sanitizeInput($_POST['nomination'] ?? '');
+$section = sanitizeInput($_POST['section'] ?? '');
+$work_title = sanitizeInput($_POST['work_title'] ?? '');
+$email = filter_var($_POST['email'] ?? '', FILTER_SANITIZE_EMAIL);
+$phone = sanitizeInput($_POST['phone'] ?? '');
+$consent = isset($_POST['consent']);
 
-?>
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Заявка отправлена — Конкурс «Пирамида»</title>
-    <link rel="stylesheet" href="assets/css/style.css">
-</head>
-<body>
-    <?php include 'header.php'; ?>
+$errors = [];
+
+if (empty($fio)) {
+    $errors[] = 'Укажите ФИО';
+}
+
+if (empty($educational_institution)) {
+    $errors[] = 'Укажите учебное заведение';
+}
+
+if (empty($course)) {
+    $errors[] = 'Укажите курс';
+}
+
+if (empty($nominationSection)) {
+    $errors[] = 'Выберите номинацию и раздел';
+}
+
+if (empty($work_title)) {
+    $errors[] = 'Укажите название работы';
+}
+
+if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    $errors[] = 'Укажите корректный email';
+}
+
+if (!$consent) {
+    $errors[] = 'Требуется согласие на обработку персональных данных';
+}
+
+if (!isset($_FILES['work']) || $_FILES['work']['error'] !== UPLOAD_ERR_OK) {
+    $errors[] = 'Ошибка загрузки файла';
+}
+
+if (!empty($errors)) {
+    $_SESSION['form_errors'] = $errors;
+    $_SESSION['form_data'] = $_POST;
+    if (!empty($nominationSection)) {
+        $_SESSION['form_data']['nomination_section'] = $nominationSection;
+    }
+    header('Location: ' . SITE_URL . 'register.php');
+    exit;
+}
+
+// Проверка файла
+$file = $_FILES['work'];
+$fileSize = $file['size'];
+$fileType = $file['type'];
+$fileTmpName = $file['tmp_name'];
+$fileExt = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+if (!in_array($fileExt, ALLOWED_EXTENSIONS)) {
+    redirect(SITE_URL . 'register.php', 'Недопустимый формат файла', 'error');
+}
+
+if (!in_array($fileType, ALLOWED_MIME_TYPES)) {
+    redirect(SITE_URL . 'register.php', 'Недопустимый тип файла', 'error');
+}
+
+if ($fileSize > UPLOAD_MAX_SIZE) {
+    redirect(SITE_URL . 'register.php', 'Файл слишком большой (максимум 10 Мб)', 'error');
+}
+
+if (!validateFileSignature($fileTmpName)) {
+    redirect(SITE_URL . 'register.php', 'Файл не является изображением', 'error');
+}
+
+if (!validateImageDimensions($fileTmpName)) {
+    redirect(SITE_URL . 'register.php', 'Изображение слишком большое (макс. 5000×5000 px)', 'error');
+}
+
+// Создание директорий
+if (!is_dir(UPLOAD_DIR_ORIGINALS)) {
+    if (!mkdir(UPLOAD_DIR_ORIGINALS, 0755, true)) {
+        redirect(SITE_URL . 'register.php', 'Ошибка создания директории', 'error');
+    }
+}
+
+if (!is_dir(UPLOAD_DIR_GALLERY)) {
+    if (!mkdir(UPLOAD_DIR_GALLERY, 0755, true)) {
+        redirect(SITE_URL . 'register.php', 'Ошибка создания директории', 'error');
+    }
+}
+
+if (!is_writable(UPLOAD_DIR_ORIGINALS)) {
+    redirect(SITE_URL . 'register.php', 'Нет прав на запись в директорию', 'error');
+}
+
+// Генерация имени и сохранение файла
+$filename = generateUniqueFilename($fileExt);
+$originalPath = UPLOAD_DIR_ORIGINALS . $filename;
+$galleryPath = UPLOAD_DIR_GALLERY . $filename;
+
+if (!move_uploaded_file($fileTmpName, $originalPath)) {
+    redirect(SITE_URL . 'register.php', 'Ошибка сохранения файла', 'error');
+}
+
+// Создание миниатюры
+if (!createThumbnail($originalPath, $galleryPath, 800)) {
+    unlink($originalPath);
+    redirect(SITE_URL . 'register.php', 'Ошибка обработки изображения', 'error');
+}
+
+// Сохранение в БД
+try {
+    $stmt = $pdo->prepare("
+        INSERT INTO applications (fio, educational_institution, course, nomination, section, work_title, email, phone, work_file, created_at) 
+        VALUES (:fio, :educational_institution, :course, :nomination, :section, :work_title, :email, :phone, :work, NOW())
+    ");
     
-    <main class="site-main">
-        <div class="container">
-            <?php
-            
-            $fio = sanitizeInput($_POST['fio'] ?? '');
-            $educational_institution = sanitizeInput($_POST['educational_institution'] ?? '');
-            $course = sanitizeInput($_POST['course'] ?? '');
-            $nominationSection = sanitizeInput($_POST['nomination_section'] ?? '');
-            $nomination = sanitizeInput($_POST['nomination'] ?? '');
-            $section = sanitizeInput($_POST['section'] ?? '');
-            $work_title = sanitizeInput($_POST['work_title'] ?? '');
-            $email = filter_var($_POST['email'] ?? '', FILTER_SANITIZE_EMAIL);
-            $phone = sanitizeInput($_POST['phone'] ?? '');
-            $consent = isset($_POST['consent']);
-            
-            $errors = [];
-            
-            if (empty($fio)) {
-                $errors[] = 'Укажите ФИО';
-            }
-            
-            if (empty($educational_institution)) {
-                $errors[] = 'Укажите учебное заведение';
-            }
-            
-            if (empty($course)) {
-                $errors[] = 'Укажите курс';
-            }
-            
-            if (empty($nominationSection)) {
-                $errors[] = 'Выберите номинацию и раздел';
-            }
-            
-            if (empty($work_title)) {
-                $errors[] = 'Укажите название работы';
-            }
-            
-            if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $errors[] = 'Укажите корректный email';
-            }
-            
-            if (!$consent) {
-                $errors[] = 'Требуется согласие на обработку персональных данных';
-            }
-            
-            if (!isset($_FILES['work']) || $_FILES['work']['error'] !== UPLOAD_ERR_OK) {
-                $errors[] = 'Ошибка загрузки файла';
-            }
-            
-            if (!empty($errors)) {
-                $_SESSION['form_errors'] = $errors;
-                $_SESSION['form_data'] = $_POST;
-                if (!empty($nominationSection)) {
-                    $_SESSION['form_data']['nomination_section'] = $nominationSection;
-                }
-                header('Location: ' . SITE_URL . 'register.php');
-                exit;
-            }
-            
-            // Проверка файла
-            $file = $_FILES['work'];
-            $fileSize = $file['size'];
-            $fileType = $file['type'];
-            $fileTmpName = $file['tmp_name'];
-            $fileExt = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-            
-            if (!in_array($fileExt, ALLOWED_EXTENSIONS)) {
-                redirect(SITE_URL . 'register.php', 'Недопустимый формат файла', 'error');
-            }
-            
-            if (!in_array($fileType, ALLOWED_MIME_TYPES)) {
-                redirect(SITE_URL . 'register.php', 'Недопустимый тип файла', 'error');
-            }
-            
-            if ($fileSize > UPLOAD_MAX_SIZE) {
-                redirect(SITE_URL . 'register.php', 'Файл слишком большой (максимум 10 Мб)', 'error');
-            }
-            
-            if (!validateFileSignature($fileTmpName)) {
-                redirect(SITE_URL . 'register.php', 'Файл не является изображением', 'error');
-            }
-            
-            if (!validateImageDimensions($fileTmpName)) {
-                redirect(SITE_URL . 'register.php', 'Изображение слишком большое (макс. 5000×5000 px)', 'error');
-            }
-            
-            // Создание директорий
-            if (!is_dir(UPLOAD_DIR_ORIGINALS)) {
-                if (!mkdir(UPLOAD_DIR_ORIGINALS, 0755, true)) {
-                    redirect(SITE_URL . 'register.php', 'Ошибка создания директории', 'error');
-                }
-            }
-            
-            if (!is_dir(UPLOAD_DIR_GALLERY)) {
-                if (!mkdir(UPLOAD_DIR_GALLERY, 0755, true)) {
-                    redirect(SITE_URL . 'register.php', 'Ошибка создания директории', 'error');
-                }
-            }
-            
-            if (!is_writable(UPLOAD_DIR_ORIGINALS)) {
-                redirect(SITE_URL . 'register.php', 'Нет прав на запись в директорию', 'error');
-            }
-            
-            // Генерация имени и сохранение файла
-            $filename = generateUniqueFilename($fileExt);
-            $originalPath = UPLOAD_DIR_ORIGINALS . $filename;
-            $galleryPath = UPLOAD_DIR_GALLERY . $filename;
-            
-            if (!move_uploaded_file($fileTmpName, $originalPath)) {
-                redirect(SITE_URL . 'register.php', 'Ошибка сохранения файла', 'error');
-            }
-            
-            // Создание миниатюры
-            if (!createThumbnail($originalPath, $galleryPath, 800)) {
-                unlink($originalPath);
-                redirect(SITE_URL . 'register.php', 'Ошибка обработки изображения', 'error');
-            }
-            
-            // Сохранение в БД
-            try {
-                $stmt = $pdo->prepare("
-                    INSERT INTO applications (fio, educational_institution, course, nomination, section, work_title, email, phone, work_file, created_at) 
-                    VALUES (:fio, :educational_institution, :course, :nomination, :section, :work_title, :email, :phone, :work, NOW())
-                ");
-                
-                $stmt->execute([
-                    'fio' => $fio,
-                    'educational_institution' => $educational_institution,
-                    'course' => $course,
-                    'nomination' => $nomination,
-                    'section' => $section,
-                    'work_title' => $work_title,
-                    'email' => $email,
-                    'phone' => $phone,
-                    'work' => $filename,
-                ]);
-                
-                $applicationId = $pdo->lastInsertId();
-                
-            } catch (PDOException $e) {
-                unlink($originalPath);
-                unlink($galleryPath);
-                redirect(SITE_URL . 'register.php', 'Ошибка сохранения данных', 'error');
-            }
-            ?>
-            
-            <div class="success-message" style="margin-top: 30px; padding: 20px; background: #e8f5e9; border-radius: 8px; border-left: 4px solid #4CAF50;">
-                <h2 style="color: #4CAF50; margin-bottom: 15px;">✅ Заявка успешно отправлена!</h2>
-                <p style="margin-bottom: 10px;">Ваша работа принята на рассмотрение жюри.</p>
-                <p style="margin-bottom: 10px;">ID заявки: <strong><?php echo $applicationId; ?></strong></p>
-                <p style="margin-bottom: 10px;">Файл работы: <strong><?php echo htmlspecialchars($filename); ?></strong></p>
-                <p style="margin-bottom: 20px;">После подведения итогов дипломы и сертификаты участников будут доступны для скачивания на сайте во вкладках «Победители» и «Участники»</p>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <a href="<?php echo SITE_URL; ?>register.php" class="btn btn--primary" style="display: inline-block; padding: 10px 20px; background: #2196F3; color: white; text-decoration: none; border-radius: 4px;">← Вернуться к форме</a>
-                    <a href="<?php echo SITE_URL; ?>" class="btn btn--secondary" style="display: inline-block; padding: 10px 20px; background: #666; color: white; text-decoration: none; border-radius: 4px;">← На главную</a>
-                </div>
-            </div>
-        </div>
-    </main>
+    $stmt->execute([
+        'fio' => $fio,
+        'educational_institution' => $educational_institution,
+        'course' => $course,
+        'nomination' => $nomination,
+        'section' => $section,
+        'work_title' => $work_title,
+        'email' => $email,
+        'phone' => $phone,
+        'work' => $filename,
+    ]);
     
-    <?php include 'footer.php'; ?>
-</body>
-</html>
+    $applicationId = $pdo->lastInsertId();
+    
+} catch (PDOException $e) {
+    unlink($originalPath);
+    unlink($galleryPath);
+    redirect(SITE_URL . 'register.php', 'Ошибка сохранения данных', 'error');
+}
+
+// Перенаправление на register.php с параметрами успеха
+header('Location: ' . SITE_URL . 'register.php?success=1&application_id=' . $applicationId . '&filename=' . urlencode($filename));
+exit;
