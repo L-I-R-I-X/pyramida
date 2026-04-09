@@ -8,6 +8,9 @@ $basePath = __DIR__ . '/..';
 define('UPLOAD_DIR_ORIGINALS', $basePath . '/uploads/originals/');
 define('UPLOAD_DIR_GALLERY', $basePath . '/uploads/gallery/');
 
+define('UPLOAD_URL_ORIGINALS', SITE_URL . 'uploads/originals/');
+define('UPLOAD_URL_GALLERY', SITE_URL . 'uploads/gallery/');
+
 define('CACHE_DIR', $basePath . '/cache/');
 define('CACHE_CERTIFICATES_DIR', CACHE_DIR . 'certificates/');
 
@@ -21,5 +24,4 @@ define('ALLOWED_MIME_TYPES', ['image/jpeg']);
 ini_set('upload_max_filesize', '10M');
 ini_set('post_max_size', '12M');
 ini_set('max_file_uploads', 5);
-
 ?>
