@@ -71,11 +71,13 @@ function exportWorks($pdo, $type = 'all') {
         die('Ошибка: ZipArchive не доступен');
     }
     
-    $zip = new ZipArchive();
+    $tempDir = sys_get_temp_dir();
     $filename = $type === 'all' ? 'works_all_' : 'works_winners_';
     $filename .= date('Y-m-d_H-i-s') . '.zip';
+    $fullPath = $tempDir . DIRECTORY_SEPARATOR . $filename;
     
-    if ($zip->open($filename, ZipArchive::CREATE) !== TRUE) {
+    $zip = new ZipArchive();
+    if ($zip->open($fullPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== TRUE) {
         die('Ошибка: не удалось создать ZIP-архив');
     }
     
@@ -90,6 +92,7 @@ function exportWorks($pdo, $type = 'all') {
     $nominationNames = ['arch_composition' => 'Архитектурная_композиция','art_graphics' => 'Художественно-проектная_графика','nature_drawing' => 'Рисунок_с_натуры','photography' => 'Фотография'];
     
     $manifest = "СПИСОК РАБОТ\n================\n\n";
+    $filesAdded = 0;
     
     foreach ($applications as $app) {
         $originalPath = UPLOAD_DIR_ORIGINALS . $app['work_file'];
@@ -101,21 +104,32 @@ function exportWorks($pdo, $type = 'all') {
             $workTitle = preg_replace('/[^a-zA-Zа-яА-Я0-9]/u', '_', $app['work_title'] ?? 'Без_названия');
             
             $zipName = "{$nomination}/{$section}/{$fio}_{$workTitle}.jpg";
-            $zip->addFile($originalPath, $zipName);
-            
-            $manifest .= "{$app['fio']} | {$app['educational_institution']} | {$app['nomination']} | {$app['section']}\n";
-            $manifest .= "   Файл: {$zipName}\n\n";
+            if ($zip->addFile($originalPath, $zipName)) {
+                $filesAdded++;
+                $manifest .= "{$app['fio']} | {$app['educational_institution']} | {$app['nomination']} | {$app['section']}\n";
+                $manifest .= "   Файл: {$zipName}\n\n";
+            }
         }
     }
     
     $zip->addFromString('MANIFEST.txt', $manifest);
-    $zip->close();
+    
+    if (!$zip->close()) {
+        die('Ошибка: не удалось завершить создание ZIP-архива');
+    }
+    
+    if (!file_exists($fullPath) || filesize($fullPath) === 0) {
+        die('Ошибка: ZIP-архив пуст или не создан');
+    }
     
     header('Content-Type: application/zip');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
-    header('Content-Length: ' . filesize($filename));
-    readfile($filename);
-    unlink($filename);
+    header('Content-Length: ' . filesize($fullPath));
+    header('Cache-Control: no-cache, must-revalidate');
+    header('Pragma: no-cache');
+    
+    readfile($fullPath);
+    unlink($fullPath);
     exit;
 }
 
