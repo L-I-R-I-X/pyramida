@@ -182,6 +182,25 @@
                                 <div class="jury-degree">к.п.н.</div>
                                 <div class="jury-info">Член СХ с 2007 года</div>
                             </div>
+                            
+                            <div class="jury-member">
+                                <div class="jury-name">Пронина Наталья Константиновна</div>
+                                <div class="jury-degree">к.п.н.</div>
+                                <div class="jury-info">член Союза художников России</div>
+                            </div>
+                            
+                            <div class="jury-member">
+                                <div class="jury-name">Гуменюк Алла Николаевна</div>
+                                <div class="jury-position">Зав. кафедрой, профессор</div>
+                                <div class="jury-degree">к.иск.</div>
+                                <div class="jury-info">почётный член Российской академии художеств, засл. работник культуры РФ, член Международной ассоциации искусствоведов, член Союза художников и Союза архитекторов России, член АИАП/ЮНЕСКО</div>
+                            </div>
+                            
+                            <div class="jury-member">
+                                <div class="jury-name">Машанов Андрей Николаевич</div>
+                                <div class="jury-position">Профессор</div>
+                                <div class="jury-info">действительный член Российской академии художеств, засл. художник РФ, член Союза художников России, председатель правления и региональный секретарь Омского отделения ВТОО «СХ России», член АИАП/ЮНЕСКО</div>
+                            </div>
                         </div>
                         </div>
 
