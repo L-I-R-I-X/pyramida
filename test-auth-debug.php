@@ -689,8 +689,51 @@ if ($currentUser) {
     echo '</pre>';
 } else {
     echo '<span class="warning-text"><span class="cross-mark">✗</span> Не авторизован</span>';
+    echo '<br><span class="warning-text">⚠️ <strong>ВНИМАНИЕ:</strong> Это нормально для текущего запроса!</span>';
+    echo '<br><span class="warning-text">Cookie был установлен функцией setcookie(), но станет доступен в $_COOKIE только после перезагрузки страницы.</span>';
+    echo '<br><span class="warning-text"><strong>Решение:</strong> Обновите страницу (F5) - тогда checkAuth() найдёт cookie и авторизация будет подтверждена.</span>';
 }
 echo '</div>';
+
+// Дополнительная проверка: если была успешная авторизация, но checkAuth() не работает
+if ($formSubmitted && isset($authResult['success']) && $authResult['success'] && !$currentUser) {
+    echo '<div class="step warning">';
+    echo '<h3>⚠️ Объяснение проблемы</h3>';
+    echo '<p>Вы видите эту секцию, потому что:</p>';
+    echo '<ol>';
+    echo '<li>Авторизация прошла успешно (этап 4.4)</li>';
+    echo '<li>Файл сессии создан (этап 4.6)</li>';
+    echo '<li>Cookie установлен через setcookie() (этап 4.5)</li>';
+    echo '<li>НО checkAuth() возвращает "Не авторизован"</li>';
+    echo '</ol>';
+    echo '<p><strong>Причина:</strong> PHP не видит cookie, установленные в текущем запросе. Они появятся в массиве $_COOKIE только после следующего HTTP-запроса (перезагрузки страницы).</p>';
+    echo '<p><strong>Что делать:</strong></p>';
+    echo '<ul>';
+    echo '<li>🔄 <strong>Обновите страницу (F5)</strong> - это нормальное поведение</li>';
+    echo '<li>После обновления checkAuth() найдёт cookie и покажет "Авторизован"</li>';
+    echo '<li>Или перейдите в <a href="' . BASE_URL . 'admin/applications.php">админ-панель</a> - там уже будет работать авторизация</li>';
+    echo '</ul>';
+    
+    // Показываем симуляцию checkAuth с правильным токеном
+    if (isset($authResult['token'])) {
+        echo '<div class="form-group">';
+        echo '<span class="label">🔍 Симуляция checkAuth() с правильным токеном:</span><br>';
+        $simulatedSession = readSessionFile($authResult['token']);
+        if ($simulatedSession) {
+            echo '<span class="value"><span class="check-mark">✓</span> Симуляция успешна - сессия найдена по токену из authenticate()</span>';
+            echo '<pre>';
+            print_r($simulatedSession);
+            echo '</pre>';
+            echo '<span class="value">Токен из authenticate(): <code>' . htmlspecialchars($authResult['token']) . '</code></span><br>';
+            echo '<span class="value">Токен из $_COOKIE: <code>' . htmlspecialchars($_COOKIE[SESSION_COOKIE_NAME] ?? 'не доступен') . '</code></span>';
+            echo '<br><span class="error-text">❌ Эти токены НЕ совпадают, поэтому checkAuth() не работает в этом запросе!</span>';
+        } else {
+            echo '<span class="error-text">Симуляция не удалась - файл сессии не найден</span>';
+        }
+        echo '</div>';
+    }
+    echo '</div>';
+}
 
 echo '</div>';
 
