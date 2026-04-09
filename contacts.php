@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Контакты — Конкурс «Пирамида»</title>
-    <meta name="description" content="Контактная информация организаторов 1 Международного конкурса архитектурной графики">
+    <meta name="description" content="Контактная информация организаторов I Международного конкурса архитектурной графики">
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
