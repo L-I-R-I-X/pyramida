@@ -49,7 +49,7 @@
                         
                         <div class="contact-item">
                             <h3>E-mail контактного лица Конкурса</h3>
-                            <p><a href="mailto:shipilina.ev@sibadi.org">shipilina.ev@sibadi.org</a></p>
+                            <p><a href="mailto:Shipillina@list.ru">Shipillina@list.ru</a></p>
                         </div>
                         
                         <div class="contact-item">
