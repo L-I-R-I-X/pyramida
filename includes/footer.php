@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . '/config.php'; ?>
 <footer class="site-footer">
     <div class="container">
         <p>&copy; 2026 Конкурс «Пирамида»</p>
@@ -8,7 +9,7 @@
         <p>+7 (913) 623-48-34 — Евгения Владимировна | +7 (913) 629-32-68 — Зоя Владимировна</p>
         <p style="margin-top: 15px;">
             <a href="https://t.me/k_archi" target="_blank" rel="noopener noreferrer">
-                <img src="referal.png" alt="Партнёр конкурса" style="height: 40px; width: auto;">
+                <img src="<?php echo BASE_URL; ?>assets/img/referal.png" alt="Партнёр конкурса" style="height: 40px; width: auto;">
             </a>
         </p>
     </div>
